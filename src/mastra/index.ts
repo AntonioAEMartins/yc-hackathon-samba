@@ -4,8 +4,6 @@ import { Mastra } from '@mastra/core/mastra';
 import { registerApiRoute } from '@mastra/core/server';
 import { PinoLogger } from '@mastra/loggers';
 import { LibSQLStore } from '@mastra/libsql';
-import { githubWorkflow } from './workflows/github-workflow.js';
-import { fixFromStacktraceWorkflow } from './workflows/fix-from-stacktrace-workflow.js';
 import { fixFromStacktraceWorkflowV2 } from './workflows/fix-from-stacktrace-workflow-v2.js';
 import { githubAgent } from './agents/github-agent.js';
 import { discoveryAgent } from './agents/discovery-agent.js';
@@ -27,7 +25,7 @@ function verifySignature(rawPayload: string, signatureHeader: string | undefined
 }
 
 export const mastra = new Mastra({
-  workflows: { githubWorkflow, fixFromStacktraceWorkflow, fixFromStacktraceWorkflowV2 },
+  workflows: { fixFromStacktraceWorkflowV2 },
   agents: { githubAgent, discoveryAgent, executionAgent, finalizeAgent },
   storage: new LibSQLStore({
     // stores telemetry, evals, ... into memory storage, if it needs to persist, change to file:../mastra.db
