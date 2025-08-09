@@ -7,6 +7,11 @@ import { githubListReposTool } from '../tools/github-list-repos-tool.js';
 import { githubSearchCodeTool } from '../tools/github-search-code-tool.js';
 import { githubGetRepoByUrlTool } from '../tools/github-get-repo-by-url-tool.js';
 import {
+  githubCommitToDevTool,
+  githubOpenDevPrToMainTool,
+  githubMergePrTool,
+} from '../tools/github-dev-tools.js';
+import {
   githubCreateBranchTool,
   githubCommitFileTool,
   githubCreatePrTool,
@@ -33,6 +38,9 @@ Follow these rules:
     'github-create-pr': githubCreatePrTool,
     'github-approve-pr': githubApprovePrTool,
     'github-get-repo-by-url': githubGetRepoByUrlTool,
+    'github-commit-to-dev': githubCommitToDevTool,
+    'github-open-dev-pr-to-main': githubOpenDevPrToMainTool,
+    'github-merge-pr': githubMergePrTool,
   },
   memory: new Memory({
     storage: new LibSQLStore({
