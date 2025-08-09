@@ -91,12 +91,21 @@ const parseInput = createStep({
       }
     }
 
-    // Extract frames: JS and Python basic
+    // Extract frames: JS and Python basic. Also normalize framework compiled paths back to src/* when possible.
     const fileCandidates: Array<{ pathOrName: string; line?: number; column?: number }> = [];
     const jsRe = /^\s*at\s+(?:(.*?)\s+\()?(.+?):(\d+):(\d+)\)?$/;
     for (const raw of lines) {
       const m = jsRe.exec(raw);
-      if (m) fileCandidates.push({ pathOrName: m[2], line: Number(m[3]), column: Number(m[4]) });
+      if (m) {
+        let pathOrName = m[2];
+        // Heuristic: if path looks like Next.js compiled output, try to pull the original src path from the stack line context
+        if (/\.next\//.test(pathOrName) && /route\.js$/.test(pathOrName)) {
+          // Look at the entire raw line; sometimes the original TS/TSX path is logged in the message/crumbs separately
+          const srcMatch = /(src\/[A-Za-z0-9_.\-\/]+\.(?:ts|tsx|js|jsx))/i.exec(raw);
+          if (srcMatch) pathOrName = srcMatch[1];
+        }
+        fileCandidates.push({ pathOrName, line: Number(m[3]), column: Number(m[4]) });
+      }
     }
     if (fileCandidates.length === 0) {
       const pyRe = /^\s*File\s+"(.+?)",\s+line\s+(\d+)/;
@@ -106,17 +115,28 @@ const parseInput = createStep({
       }
     }
 
-    // Fallback: look for repo-relative paths like src/...ext even if there is no explicit frame
-    if (!explicitPath && fileCandidates.length === 0) {
+    // Prefer repo-relative paths like src/...ext if present anywhere in the prompt.
+    // This helps avoid selecting compiled paths like /.next/server/.../route.js from frameworks.
+    try {
       const genericPathRe = /(src\/[A-Za-z0-9_.\-\/]+\.(?:ts|tsx|js|jsx|mjs|cjs|py|rb|go|java|cs|php|md))/i;
+      let repoRelPath: string | undefined;
       for (const raw of lines) {
         const m = genericPathRe.exec(raw);
-        if (m) {
-          fileCandidates.push({ pathOrName: m[1] });
-          break;
+        if (m) { repoRelPath = m[1]; break; }
+      }
+      if (!repoRelPath) {
+        // Try whole text once more if line scanning missed it
+        const mAll = genericPathRe.exec(text);
+        if (mAll) repoRelPath = mAll[1];
+      }
+      if (repoRelPath) {
+        const already = fileCandidates.find((c) => String(c.pathOrName || '').includes(repoRelPath!));
+        if (!already) {
+          // Put at the front to be the primary candidate
+          fileCandidates.unshift({ pathOrName: repoRelPath });
         }
       }
-    }
+    } catch {}
 
     const out = {
       runId,
@@ -233,19 +253,38 @@ const locateFile = createStep({
       // ignore and fall back to search
     }
 
-    // If not directly found (absolute path or missing slash), fall back to GitHub code search
-    const isAbsolute = candidatePath.startsWith('/') || /^[A-Za-z]:\\/.test(candidatePath);
-    if (!foundDirect && (isAbsolute || !candidatePath.includes('/'))) {
-      const basename = candidatePath.split(/[\\/]/).pop() || candidatePath;
-      const q = `${basename} repo:${inputData.owner}/${inputData.repo}`;
-      const params = new URLSearchParams({ q, per_page: '5', page: '1' });
-      const searchUrl = `https://api.github.com/search/code?${params.toString()}`;
-      const sRes = await fetch(searchUrl, { headers: buildHeaders(token, false) });
-      await throwIfNotOk(sRes);
-      const sData = await sRes.json();
-      const item = (sData.items || []).find((i: any) => i && i.path && i.name === basename) || (sData.items || [])[0];
-      if (!item) throw new Error(`Could not locate ${basename} in ${inputData.owner}/${inputData.repo}`);
-      candidatePath = item.path as string;
+    // If not directly found, fall back to GitHub code search by basename.
+    // This runs regardless of whether the candidate has slashes, because the
+    // original path may be compiled output (e.g., .next/server/.../route.js).
+    if (!foundDirect) {
+      const basenameRaw = candidatePath.split(/[\\/]/).pop() || candidatePath;
+      const altBasenames: string[] = [basenameRaw];
+      // Try TypeScript variants when we see compiled .js
+      if (/\.jsx?$/.test(basenameRaw)) {
+        altBasenames.push(basenameRaw.replace(/\.jsx?$/, '.ts'));
+        altBasenames.push(basenameRaw.replace(/\.jsx?$/, '.tsx'));
+      }
+      let pickedPath: string | undefined;
+      let pickedName: string | undefined;
+      for (const name of altBasenames) {
+        const q = `${name} repo:${inputData.owner}/${inputData.repo}`;
+        const params = new URLSearchParams({ q, per_page: '10', page: '1' });
+        const searchUrl = `https://api.github.com/search/code?${params.toString()}`;
+        const sRes = await fetch(searchUrl, { headers: buildHeaders(token, false) });
+        await throwIfNotOk(sRes);
+        const sData = await sRes.json();
+        const item = (sData.items || []).find((i: any) => i && i.path && i.name === name) || (sData.items || [])[0];
+        if (item && item.path) {
+          pickedPath = item.path as string;
+          pickedName = item.name as string;
+          break;
+        }
+      }
+      if (!pickedPath) {
+        throw new Error(`Could not locate ${basenameRaw} in ${inputData.owner}/${inputData.repo}`);
+      }
+      candidatePath = pickedPath;
+      try { console.log('[v2/locate-file] fallback_search', { basename: basenameRaw, pickedName, candidatePath }); } catch {}
     }
     const out = {
       runId: inputData.runId,
