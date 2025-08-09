@@ -5,6 +5,7 @@ import { registerApiRoute } from '@mastra/core/server';
 import { PinoLogger } from '@mastra/loggers';
 import { LibSQLStore } from '@mastra/libsql';
 import { fixFromStacktraceWorkflowV2 } from './workflows/fix-from-stacktrace-workflow-v2.js';
+import { fixFromStacktraceWorkflowV3 } from './workflows/fix-from-stacktrace-workflow-v3.js';
 import { githubAgent } from './agents/github-agent.js';
 import { discoveryAgent } from './agents/discovery-agent.js';
 import { executionAgent } from './agents/execution-agent.js';
@@ -25,7 +26,7 @@ function verifySignature(rawPayload: string, signatureHeader: string | undefined
 }
 
 export const mastra = new Mastra({
-  workflows: { fixFromStacktraceWorkflowV2 },
+  workflows: { fixFromStacktraceWorkflowV2, fixFromStacktraceWorkflowV3 },
   agents: { githubAgent, discoveryAgent, executionAgent, finalizeAgent },
   storage: new LibSQLStore({
     // stores telemetry, evals, ... into memory storage, if it needs to persist, change to file:../mastra.db
@@ -61,7 +62,8 @@ export const mastra = new Mastra({
           try {
             logger.info?.('--- Incoming Sentry webhook ---');
             logger.info?.({ isValid, resource, timestamp }, 'Sentry webhook metadata');
-            logger.info?.(payload ?? rawText, 'Sentry webhook payload');
+            // logger.info?.(payload ?? rawText, 'Sentry webhook payload');
+            logger.info(JSON.stringify(payload, null, 2));
             logger.info?.('--------------------------------');
           } catch {
             // no-op logging errors
