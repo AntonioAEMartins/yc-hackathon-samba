@@ -2,15 +2,16 @@ import { openai } from '@ai-sdk/openai';
 import { Agent } from '@mastra/core/agent';
 import { Memory } from '@mastra/memory';
 import { LibSQLStore } from '@mastra/libsql';
-import { githubFileTool } from '../tools/github-file-tool';
-import { githubListReposTool } from '../tools/github-list-repos-tool';
-import { githubSearchCodeTool } from '../tools/github-search-code-tool';
+import { githubFileTool } from '../tools/github-file-tool.js';
+import { githubListReposTool } from '../tools/github-list-repos-tool.js';
+import { githubSearchCodeTool } from '../tools/github-search-code-tool.js';
+import { githubGetRepoByUrlTool } from '../tools/github-get-repo-by-url-tool.js';
 import {
   githubCreateBranchTool,
   githubCommitFileTool,
   githubCreatePrTool,
   githubApprovePrTool,
-} from '../tools/github-git-ops-tools';
+} from '../tools/github-git-ops-tools.js';
 
 export const githubAgent = new Agent({
   name: 'GitHub Agent',
@@ -31,6 +32,7 @@ Follow these rules:
     'github-commit-file': githubCommitFileTool,
     'github-create-pr': githubCreatePrTool,
     'github-approve-pr': githubApprovePrTool,
+    'github-get-repo-by-url': githubGetRepoByUrlTool,
   },
   memory: new Memory({
     storage: new LibSQLStore({
