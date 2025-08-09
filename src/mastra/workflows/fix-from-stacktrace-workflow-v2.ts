@@ -91,12 +91,21 @@ const parseInput = createStep({
       }
     }
 
-    // Extract frames: JS and Python basic
+    // Extract frames: JS and Python basic. Also normalize framework compiled paths back to src/* when possible.
     const fileCandidates: Array<{ pathOrName: string; line?: number; column?: number }> = [];
     const jsRe = /^\s*at\s+(?:(.*?)\s+\()?(.+?):(\d+):(\d+)\)?$/;
     for (const raw of lines) {
       const m = jsRe.exec(raw);
-      if (m) fileCandidates.push({ pathOrName: m[2], line: Number(m[3]), column: Number(m[4]) });
+      if (m) {
+        let pathOrName = m[2];
+        // Heuristic: if path looks like Next.js compiled output, try to pull the original src path from the stack line context
+        if (/\.next\//.test(pathOrName) && /route\.js$/.test(pathOrName)) {
+          // Look at the entire raw line; sometimes the original TS/TSX path is logged in the message/crumbs separately
+          const srcMatch = /(src\/[A-Za-z0-9_.\-\/]+\.(?:ts|tsx|js|jsx))/i.exec(raw);
+          if (srcMatch) pathOrName = srcMatch[1];
+        }
+        fileCandidates.push({ pathOrName, line: Number(m[3]), column: Number(m[4]) });
+      }
     }
     if (fileCandidates.length === 0) {
       const pyRe = /^\s*File\s+"(.+?)",\s+line\s+(\d+)/;
@@ -106,17 +115,28 @@ const parseInput = createStep({
       }
     }
 
-    // Fallback: look for repo-relative paths like src/...ext even if there is no explicit frame
-    if (!explicitPath && fileCandidates.length === 0) {
+    // Prefer repo-relative paths like src/...ext if present anywhere in the prompt.
+    // This helps avoid selecting compiled paths like /.next/server/.../route.js from frameworks.
+    try {
       const genericPathRe = /(src\/[A-Za-z0-9_.\-\/]+\.(?:ts|tsx|js|jsx|mjs|cjs|py|rb|go|java|cs|php|md))/i;
+      let repoRelPath: string | undefined;
       for (const raw of lines) {
         const m = genericPathRe.exec(raw);
-        if (m) {
-          fileCandidates.push({ pathOrName: m[1] });
-          break;
+        if (m) { repoRelPath = m[1]; break; }
+      }
+      if (!repoRelPath) {
+        // Try whole text once more if line scanning missed it
+        const mAll = genericPathRe.exec(text);
+        if (mAll) repoRelPath = mAll[1];
+      }
+      if (repoRelPath) {
+        const already = fileCandidates.find((c) => String(c.pathOrName || '').includes(repoRelPath!));
+        if (!already) {
+          // Put at the front to be the primary candidate
+          fileCandidates.unshift({ pathOrName: repoRelPath });
         }
       }
-    }
+    } catch {}
 
     const out = {
       runId,
@@ -233,19 +253,38 @@ const locateFile = createStep({
       // ignore and fall back to search
     }
 
-    // If not directly found (absolute path or missing slash), fall back to GitHub code search
-    const isAbsolute = candidatePath.startsWith('/') || /^[A-Za-z]:\\/.test(candidatePath);
-    if (!foundDirect && (isAbsolute || !candidatePath.includes('/'))) {
-      const basename = candidatePath.split(/[\\/]/).pop() || candidatePath;
-      const q = `${basename} repo:${inputData.owner}/${inputData.repo}`;
-      const params = new URLSearchParams({ q, per_page: '5', page: '1' });
-      const searchUrl = `https://api.github.com/search/code?${params.toString()}`;
-      const sRes = await fetch(searchUrl, { headers: buildHeaders(token, false) });
-      await throwIfNotOk(sRes);
-      const sData = await sRes.json();
-      const item = (sData.items || []).find((i: any) => i && i.path && i.name === basename) || (sData.items || [])[0];
-      if (!item) throw new Error(`Could not locate ${basename} in ${inputData.owner}/${inputData.repo}`);
-      candidatePath = item.path as string;
+    // If not directly found, fall back to GitHub code search by basename.
+    // This runs regardless of whether the candidate has slashes, because the
+    // original path may be compiled output (e.g., .next/server/.../route.js).
+    if (!foundDirect) {
+      const basenameRaw = candidatePath.split(/[\\/]/).pop() || candidatePath;
+      const altBasenames: string[] = [basenameRaw];
+      // Try TypeScript variants when we see compiled .js
+      if (/\.jsx?$/.test(basenameRaw)) {
+        altBasenames.push(basenameRaw.replace(/\.jsx?$/, '.ts'));
+        altBasenames.push(basenameRaw.replace(/\.jsx?$/, '.tsx'));
+      }
+      let pickedPath: string | undefined;
+      let pickedName: string | undefined;
+      for (const name of altBasenames) {
+        const q = `${name} repo:${inputData.owner}/${inputData.repo}`;
+        const params = new URLSearchParams({ q, per_page: '10', page: '1' });
+        const searchUrl = `https://api.github.com/search/code?${params.toString()}`;
+        const sRes = await fetch(searchUrl, { headers: buildHeaders(token, false) });
+        await throwIfNotOk(sRes);
+        const sData = await sRes.json();
+        const item = (sData.items || []).find((i: any) => i && i.path && i.name === name) || (sData.items || [])[0];
+        if (item && item.path) {
+          pickedPath = item.path as string;
+          pickedName = item.name as string;
+          break;
+        }
+      }
+      if (!pickedPath) {
+        throw new Error(`Could not locate ${basenameRaw} in ${inputData.owner}/${inputData.repo}`);
+      }
+      candidatePath = pickedPath;
+      try { console.log('[v2/locate-file] fallback_search', { basename: basenameRaw, pickedName, candidatePath }); } catch {}
     }
     const out = {
       runId: inputData.runId,
@@ -462,12 +501,21 @@ const commitFix = createStep({
   },
 });
 
-// Step 7: Open PR
+// Step 7: Open PR (to dev if it exists; fallback to default branch)
 const openPr = createStep({
   id: 'open-pr',
   description: 'Open a PR to default branch',
   inputSchema: commitFix.outputSchema,
-  outputSchema: z.object({ number: z.number(), url: z.string(), state: z.string() }),
+  outputSchema: z.object({
+    runId: z.string(),
+    owner: z.string(),
+    repo: z.string(),
+    branch: z.string(),
+    token: z.string().optional(),
+    number: z.number(),
+    url: z.string(),
+    state: z.string(),
+  }),
   execute: async ({ inputData }) => {
     const token = resolveToken(inputData?.token);
     try { console.log('[v2/open-pr] in', { runId: inputData.runId, branch: inputData.branch, owner: inputData.owner, repo: inputData.repo }); } catch {}
@@ -475,7 +523,14 @@ const openPr = createStep({
     const repoRes = await fetch(repoUrl, { headers: buildHeaders(token, false) });
     await throwIfNotOk(repoRes);
     const repoData = await repoRes.json();
-    const base = repoData.default_branch as string;
+    let base = repoData.default_branch as string;
+
+    // Prefer dev branch when available
+    try {
+      const devUrl = `${repoUrl}/branches/dev`;
+      const devRes = await fetch(devUrl, { headers: buildHeaders(token, false) });
+      if (devRes.ok) base = 'dev';
+    } catch {}
 
     const title = inputData.prTitle || 'fix: automated fix from stack trace';
     const body = inputData.prBody || 'Automated fix generated by workflow.';
@@ -488,8 +543,58 @@ const openPr = createStep({
     });
     await throwIfNotOk(res);
     const data = await res.json();
-    const out = { number: data.number, url: data.html_url ?? data.url, state: data.state };
-    try { console.log('[v2/open-pr] out', { runId: inputData.runId, ...out }); } catch {}
+    const out = {
+      runId: inputData.runId,
+      owner: inputData.owner,
+      repo: inputData.repo,
+      branch: inputData.branch,
+      token: inputData.token,
+      number: data.number,
+      url: data.html_url ?? data.url,
+      state: data.state,
+    };
+    try { console.log('[v2/open-pr] out', out); } catch {}
+    return out;
+  },
+});
+
+// Step 8: Merge PR automatically (attempt approve then merge)
+const mergePr = createStep({
+  id: 'merge-pr',
+  description: 'Automatically approve (best-effort) and merge the PR',
+  inputSchema: openPr.outputSchema,
+  outputSchema: z.object({
+    number: z.number(),
+    url: z.string(),
+    merged: z.boolean(),
+    sha: z.string().optional(),
+    message: z.string().optional(),
+  }),
+  execute: async ({ inputData }) => {
+    const token = resolveToken(inputData?.token);
+    try { console.log('[v2/merge-pr] in', { runId: inputData.runId, number: inputData.number, owner: inputData.owner, repo: inputData.repo }); } catch {}
+
+    // Best-effort approve (ignore failures, as many repos do not require/allow explicit approvals via token)
+    try {
+      const reviewsUrl = `https://api.github.com/repos/${encodeURIComponent(inputData.owner)}/${encodeURIComponent(inputData.repo)}/pulls/${inputData.number}/reviews`;
+      await fetch(reviewsUrl, {
+        method: 'POST',
+        headers: { ...buildHeaders(token, true), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ event: 'APPROVE', body: 'Automated approval' }),
+      });
+    } catch {}
+
+    // Merge
+    const mergeUrl = `https://api.github.com/repos/${encodeURIComponent(inputData.owner)}/${encodeURIComponent(inputData.repo)}/pulls/${inputData.number}/merge`;
+    const res = await fetch(mergeUrl, {
+      method: 'PUT',
+      headers: { ...buildHeaders(token, true), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ merge_method: 'merge' }),
+    });
+    await throwIfNotOk(res);
+    const data = await res.json();
+    const out = { number: inputData.number, url: inputData.url, merged: !!data.merged, sha: data.sha, message: data.message };
+    try { console.log('[v2/merge-pr] out', { runId: inputData.runId, ...out }); } catch {}
     return out;
   },
 });
@@ -497,7 +602,7 @@ const openPr = createStep({
 export const fixFromStacktraceWorkflowV2 = createWorkflow({
   id: 'fix-from-stacktrace-v2',
   inputSchema: parseInput.inputSchema,
-  outputSchema: openPr.outputSchema,
+  outputSchema: mergePr.outputSchema,
 })
   .then(parseInput)
   .then(resolveRepo)
@@ -505,7 +610,8 @@ export const fixFromStacktraceWorkflowV2 = createWorkflow({
   .then(readFile)
   .then(proposeFix)
   .then(commitFix)
-  .then(openPr);
+  .then(openPr)
+  .then(mergePr);
 
 fixFromStacktraceWorkflowV2.commit();
 
@@ -522,8 +628,9 @@ export async function startFixFromStacktraceV2(input: z.infer<typeof parseInput.
     const pf = await (proposeFix as any).execute({ inputData: rf });
     const cm = await (commitFix as any).execute({ inputData: pf });
     const pr = await (openPr as any).execute({ inputData: cm });
-    console.log('[v2] manual-run done', { runId, pr });
-    return pr;
+    const mg = await (mergePr as any).execute({ inputData: pr });
+    console.log('[v2] manual-run done', { runId, pr: { number: pr.number, url: pr.url }, merged: mg?.merged });
+    return mg;
   } catch (err) {
     console.error('[v2] manual-run error', { runId, err: String(err) });
     throw err;
