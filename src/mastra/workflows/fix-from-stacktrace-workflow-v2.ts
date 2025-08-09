@@ -1,6 +1,7 @@
 import { createStep, createWorkflow } from '@mastra/core/workflows';
 import { z } from 'zod';
 import { proposeFixGpt5Tool } from '../tools/propose-fix-gpt5-tool.js';
+import { initFreestyleSandbox } from '../freestyle_init.js';
 
 const resolveToken = (inputToken?: string): string | undefined => {
   return (
@@ -599,10 +600,33 @@ const mergePr = createStep({
   },
 });
 
+// Step 9: Initialize Freestyle sandbox and print URL
+const initFreestyle = createStep({
+  id: 'init-freestyle',
+  description: 'Create a Freestyle sandbox from dev branch and print the ephemeral URL',
+  inputSchema: mergePr.outputSchema,
+  outputSchema: z.object({
+    runId: z.string().optional(),
+    prNumber: z.number(),
+    merged: z.boolean(),
+    freestyleUrl: z.string().optional(),
+  }),
+  execute: async ({ inputData }) => {
+    let url: string | undefined;
+    try {
+      url = await initFreestyleSandbox();
+      try { console.log('[v2/init-freestyle] sandbox_url', { runId: (inputData as any).runId, url }); } catch {}
+    } catch (err) {
+      try { console.error('[v2/init-freestyle] failed', String(err)); } catch {}
+    }
+    return { runId: (inputData as any).runId, prNumber: inputData.number, merged: (inputData as any).merged === true, freestyleUrl: url };
+  },
+});
+
 export const fixFromStacktraceWorkflowV2 = createWorkflow({
   id: 'fix-from-stacktrace-v2',
   inputSchema: parseInput.inputSchema,
-  outputSchema: mergePr.outputSchema,
+  outputSchema: initFreestyle.outputSchema,
 })
   .then(parseInput)
   .then(resolveRepo)
@@ -611,7 +635,8 @@ export const fixFromStacktraceWorkflowV2 = createWorkflow({
   .then(proposeFix)
   .then(commitFix)
   .then(openPr)
-  .then(mergePr);
+  .then(mergePr)
+  .then(initFreestyle);
 
 fixFromStacktraceWorkflowV2.commit();
 
@@ -629,8 +654,9 @@ export async function startFixFromStacktraceV2(input: z.infer<typeof parseInput.
     const cm = await (commitFix as any).execute({ inputData: pf });
     const pr = await (openPr as any).execute({ inputData: cm });
     const mg = await (mergePr as any).execute({ inputData: pr });
-    console.log('[v2] manual-run done', { runId, pr: { number: pr.number, url: pr.url }, merged: mg?.merged });
-    return mg;
+    const fs = await (initFreestyle as any).execute({ inputData: mg });
+    console.log('[v2] manual-run done', { runId, pr: { number: pr.number, url: pr.url }, merged: mg?.merged, freestyleUrl: fs?.freestyleUrl });
+    return fs;
   } catch (err) {
     console.error('[v2] manual-run error', { runId, err: String(err) });
     throw err;
