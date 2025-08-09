@@ -5,7 +5,12 @@ import { registerApiRoute } from '@mastra/core/server';
 import { PinoLogger } from '@mastra/loggers';
 import { LibSQLStore } from '@mastra/libsql';
 import { githubWorkflow } from './workflows/github-workflow.js';
-import { githubAgent } from './agents/github-agent';
+import { fixFromStacktraceWorkflow } from './workflows/fix-from-stacktrace-workflow.js';
+import { fixFromStacktraceWorkflowV2 } from './workflows/fix-from-stacktrace-workflow-v2.js';
+import { githubAgent } from './agents/github-agent.js';
+import { discoveryAgent } from './agents/discovery-agent.js';
+import { executionAgent } from './agents/execution-agent.js';
+import { finalizeAgent } from './agents/finalize-agent.js';
 import { createHmac } from 'node:crypto';
 
 function verifySignature(rawPayload: string, signatureHeader: string | undefined, secret: string | undefined): boolean {
@@ -22,8 +27,8 @@ function verifySignature(rawPayload: string, signatureHeader: string | undefined
 }
 
 export const mastra = new Mastra({
-  workflows: { githubWorkflow },
-  agents: { githubAgent },
+  workflows: { githubWorkflow, fixFromStacktraceWorkflow, fixFromStacktraceWorkflowV2 },
+  agents: { githubAgent, discoveryAgent, executionAgent, finalizeAgent },
   storage: new LibSQLStore({
     // stores telemetry, evals, ... into memory storage, if it needs to persist, change to file:../mastra.db
     url: ":memory:",

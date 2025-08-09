@@ -1,0 +1,5 @@
+---
+description: Don't compile the mastra server with npm run dev, instead check for lint/syntax errors only
+globs:
+alwaysApply: true
+---
