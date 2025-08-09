@@ -4,9 +4,7 @@ import { Mastra } from '@mastra/core/mastra';
 import { registerApiRoute } from '@mastra/core/server';
 import { PinoLogger } from '@mastra/loggers';
 import { LibSQLStore } from '@mastra/libsql';
-import { githubWorkflow } from './workflows/github-workflow.js';
-import { fixFromStacktraceWorkflow } from './workflows/fix-from-stacktrace-workflow.js';
-import { fixFromStacktraceWorkflowV2 } from './workflows/fix-from-stacktrace-workflow-v2.js';
+import { fixFromStacktraceWorkflowV2, startFixFromStacktraceV2 } from './workflows/fix-from-stacktrace-workflow-v2.js';
 import { githubAgent } from './agents/github-agent.js';
 import { discoveryAgent } from './agents/discovery-agent.js';
 import { executionAgent } from './agents/execution-agent.js';
@@ -27,7 +25,7 @@ function verifySignature(rawPayload: string, signatureHeader: string | undefined
 }
 
 export const mastra = new Mastra({
-  workflows: { githubWorkflow, fixFromStacktraceWorkflow, fixFromStacktraceWorkflowV2 },
+  workflows: { fixFromStacktraceWorkflowV2 },
   agents: { githubAgent, discoveryAgent, executionAgent, finalizeAgent },
   storage: new LibSQLStore({
     // stores telemetry, evals, ... into memory storage, if it needs to persist, change to file:../mastra.db
@@ -43,7 +41,6 @@ export const mastra = new Mastra({
         method: 'POST',
         handler: async (c) => {
           const mastra = c.get('mastra');
-          const logger = (mastra as any)?.logger ?? console;
 
           const rawText = await c.req.text();
           const signature = c.req.header('Sentry-Hook-Signature') || c.req.header('X-Sentry-Signature');
@@ -56,24 +53,146 @@ export const mastra = new Mastra({
           let payload: unknown = null;
           try {
             payload = JSON.parse(rawText);
+            const payloadString = JSON.stringify(payload, null, 2);
+            console.log('[webhook] payload', payloadString);
           } catch {
             payload = null;
           }
 
           try {
-            logger.info?.('--- Incoming Sentry webhook ---');
-            logger.info?.({ isValid, resource, timestamp }, 'Sentry webhook metadata');
-            logger.info?.(payload ?? rawText, 'Sentry webhook payload');
-            logger.info?.('--------------------------------');
-          } catch {
-            // no-op logging errors
-          }
+            console.log('[webhook] Sentry webhook received', { isValid, resource, timestamp });
+          } catch {}
 
           if ((secret && secret.length > 0) && !isValid) {
             return c.json({ status: 'invalid signature' }, 400);
           }
 
-          return c.json({ status: 'ok' }, 200);
+          // Kick off fix-from-stacktrace-v2 if this is a Sentry event_alert
+          try {
+            const p = payload as any;
+            try {
+              console.log('[webhook] payload overview', {
+                hasPayload: !!p,
+                resourceHeader: resource,
+                payloadResource: p?.resource,
+                hasData: !!p?.data,
+                hasEvent: !!p?.data?.event,
+              });
+            } catch {}
+            const isEventAlert = (resource === 'event_alert') || (p?.resource === 'event_alert');
+            if (p && p.data && p.data.event && isEventAlert) {
+              try { console.log('[webhook] event_alert detected', { via: resource === 'event_alert' ? 'header' : 'payload' }); } catch {}
+              const evt = p.data.event;
+
+              // Try to extract stack from breadcrumbs first
+              let stack: string | undefined;
+              const crumbs = evt?.breadcrumbs?.values ?? [];
+              for (const crumb of crumbs) {
+                const s = crumb?.data?.arguments?.[0]?.stack;
+                if (typeof s === 'string' && s.length > 0) { stack = s; break; }
+              }
+
+              // Extract file path hint
+              let filePath: string | undefined;
+              const msg = crumbs?.[0]?.data?.arguments?.[0]?.message || evt?.message || evt?.metadata?.title || '';
+              const m = /(?:at|Error at:)\s+([^\s:]+):(\d+)/i.exec(String(msg));
+              if (m) { filePath = m[1]; }
+
+              // Fallbacks: scan metadata.value/title/exception.values[*].value for repo-relative path hints like src/...ext
+              const findPathInString = (s?: string) => {
+                if (!s) return undefined;
+                const mm = /(src\/[A-Za-z0-9_.\-\/]+\.(?:ts|tsx|js|jsx|mjs|cjs|py|rb|go|java|cs|php|md))/i.exec(s);
+                return mm ? mm[1] : undefined;
+              };
+              if (!filePath) {
+                filePath = findPathInString((evt as any)?.metadata?.value) || findPathInString((evt as any)?.title);
+              }
+              if (!filePath && Array.isArray((evt as any)?.exception?.values)) {
+                for (const val of (evt as any).exception.values) {
+                  const cand = findPathInString(String(val?.value || ''));
+                  if (cand) { filePath = cand; break; }
+                }
+              }
+
+              // Resolve owner/repo from env mapping
+              const mapRaw = process.env.SENTRY_PROJECT_REPO_MAP || '';
+              let owner: string | undefined;
+              let repo: string | undefined;
+              let branch: string | undefined;
+              try {
+                if (mapRaw && mapRaw.trim().length > 0) {
+                  const map = JSON.parse(mapRaw);
+                  const key = String(evt.project ?? '');
+                  const conf = map[key] || map.default;
+                  if (typeof conf === 'string') {
+                    const u = new URL(conf);
+                    const parts = u.pathname.split('/').filter(Boolean);
+                    owner = parts[0];
+                    repo = parts[1];
+                  } else if (conf && typeof conf === 'object') {
+                    owner = conf.owner; repo = conf.repo; branch = conf.branch;
+                  }
+                }
+              } catch {}
+              if (!owner || !repo) {
+                const defUrl = process.env.SENTRY_DEFAULT_REPO_URL || '';
+                if (defUrl) {
+                  try {
+                    const u = new URL(defUrl);
+                    const parts = u.pathname.split('/').filter(Boolean);
+                    owner = parts[0]; repo = parts[1];
+                  } catch {}
+                }
+                // Demo fallback if mapping/env not provided
+                if (!owner || !repo) {
+                  owner = 'AntonioAEMartins';
+                  repo = 'yc-hackathon-social';
+                }
+              }
+
+              const repoUrl = owner && repo && filePath
+                ? `https://github.com/${owner}/${repo}/blob/${branch || 'main'}/${filePath}`
+                : undefined;
+
+              const promptSections: string[] = [];
+              promptSections.push('Stack trace:');
+              promptSections.push(stack || (evt?.logentry?.formatted ?? evt?.message ?? ''));
+              if (repoUrl) { promptSections.push('\nRepo URL:'); promptSections.push(repoUrl); }
+              if (filePath) { promptSections.push('\nFile relative path:'); promptSections.push(filePath); }
+              const prompt = promptSections.join('\n');
+
+              const prTitle = evt?.metadata?.title || evt?.message || evt?.logentry?.formatted || 'Automated fix from Sentry alert';
+              const token = process.env.GITHUB_TOKEN || process.env.GITHUB_PERSONAL_ACCESS_TOKEN || undefined;
+              const input = { prompt, owner, repo, prTitle, token } as any;
+
+              // Start run and log details
+              console.log('[fix-from-stacktrace-v2] starting', { owner, repo, filePath, promptSize: prompt.length });
+              try {
+                // Prefer native start; if unavailable, run manual runner
+                const wfObj = (fixFromStacktraceWorkflowV2 as any);
+                const directStart = wfObj?.start;
+                console.log('[fix-from-stacktrace-v2] directStart available?', !!directStart);
+                if (typeof directStart === 'function') {
+                  const run = await directStart({ inputData: input });
+                  console.log('[fix-from-stacktrace-v2] started', { runId: run?.id });
+                  return c.json({ status: 'ok', started: true, workflow: 'v2', runId: run?.id }, 202);
+                }
+
+                console.log('[fix-from-stacktrace-v2] falling back to manual runner');
+                const pr = await startFixFromStacktraceV2(input);
+                return c.json({ status: 'ok', started: true, workflow: 'v2', pr }, 202);
+              } catch (errStart) {
+                console.error('[fix-from-stacktrace-v2] failed_to_start', String(errStart));
+                return c.json({ status: 'ok', started: false, error: 'failed_to_start' }, 200);
+              }
+            }
+            // Not an event_alert or missing event
+            console.log('[webhook] skipped payload (not event_alert or missing event)');
+          } catch (err) {
+            try { console.error('[webhook] processing_error', String(err)); } catch {}
+          }
+
+          return c.json({ status: 'ok', started: false }, 200);
         },
       }),
     ],
