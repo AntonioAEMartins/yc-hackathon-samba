@@ -23,7 +23,7 @@ const buildHeaders = (token?: string, requireAuth: boolean = false): Record<stri
   return headers;
 };
 
-const throwIfNotOk = async (res: Response) => {
+const throwIfNotOk = async (res: any) => {
   if (!res.ok) {
     const body = await res.text();
     throw new Error(`GitHub API error ${res.status}: ${body}`);
