@@ -4,7 +4,7 @@ import { Mastra } from '@mastra/core/mastra';
 import { registerApiRoute } from '@mastra/core/server';
 import { PinoLogger } from '@mastra/loggers';
 import { LibSQLStore } from '@mastra/libsql';
-import { githubWorkflow } from './workflows/github-workflow';
+import { githubWorkflow } from './workflows/github-workflow.js';
 import { githubAgent } from './agents/github-agent';
 import { createHmac } from 'node:crypto';
 
