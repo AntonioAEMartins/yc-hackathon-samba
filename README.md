@@ -38,23 +38,12 @@ High-level steps implemented there:
 - open-pr: Opens a PR against the default branch
 
 ### Agents (Mastra)
-All agents use `openai('gpt-5-nano')` for fast, low-latency orchestration. They call specialized tools (below) and persist memory in `LibSQLStore`.
+All agents use `openai('gpt-5-nano')` and `LibSQLStore` memory.
 
-- Discovery Agent (`src/mastra/agents/discovery-agent.ts`)
-  - Goal: Parse stack trace, identify repo and candidate file, fetch decoded file
-  - Tools: `parse-stack-trace`, `github-get-repo-by-url`, `github-search-code`, `get-github-file`, `get-github-file-decoded`
-
-- Execution Agent (`src/mastra/agents/execution-agent.ts`)
-  - Goal: Generate minimal fix and commit to a temp branch
-  - Tools: `github-commit-or-update-file`, `get-github-file-decoded`
-
-- Finalize Agent (`src/mastra/agents/finalize-agent.ts`)
-  - Goal: Open PR from feature branch to default
-  - Tool: `github-create-pr`
-
-- GitHub Agent (`src/mastra/agents/github-agent.ts`)
-  - Goal: End-to-end GitHub code-fixing assistant (parse, search, patch, PR)
-  - Tools: `get-github-file`, `get-github-file-decoded`, `github-list-repos`, `github-search-code`, `github-create-branch`, `github-commit-file`, `github-create-pr`, `github-approve-pr`, `github-get-repo-by-url`, `github-commit-or-update-file`, `github-merge-pr`, `parse-stack-trace`, `github-open-dev-pr-to-main`, `github-commit-to-dev`
+- Discovery (`src/mastra/agents/discovery-agent.ts`): parse stack, resolve repo, locate file; tools: parse stack, repo by URL, code search, get file/decoded.
+- Execution (`src/mastra/agents/execution-agent.ts`): generate minimal fix, commit/update file on feature branch; tools: commit-or-update file, get decoded file.
+- Finalize (`src/mastra/agents/finalize-agent.ts`): open PR to default branch; tool: create PR.
+- GitHub (`src/mastra/agents/github-agent.ts`): end-to-end assistant (parse, search, patch, PR); rich GitHub + parsing toolset.
 
 ### Tooling Highlights
 - `propose-fix-gpt5` (`src/mastra/tools/propose-fix-gpt5-tool.ts`)
@@ -74,39 +63,18 @@ Samba exposes a webhook: `POST /webhook`
 See `src/mastra/index.ts` for route wiring. On successful detection, the workflow either starts natively or via the manual runner `startFixFromStacktraceV2`.
 
 ### Production Integration (Sentry)
-- Who interacts: your end users use your app in production as usual.
-- On error: the Sentry SDK in your app captures the exception and an Alert Rule posts a webhook to Samba. This Sentry setup is external to this project (not part of this repo) and acts as a required building block to trigger our workflow.
-- What Samba receives: stack trace, message/title, breadcrumbs, exception values, and project metadata via Sentry’s webhook payload and headers.
-- What Samba does: verifies signature (if configured), derives repo/file/line, fetches the implicated file from GitHub, asks GPT‑5 for the smallest safe fix, commits on a short‑lived branch, and opens a PR. It does not hot‑patch production or auto‑deploy.
-
-Quick Sentry setup checklist:
-1) Enable Sentry in your app and send events in production.
-2) Create an Error Alert Rule and add a Webhook action pointing to your Samba URL: `https://<your-samba-host>/webhook`.
-3) Add a secret header in Sentry and set the same value in Samba as `WEBHOOK_SECRET` for HMAC verification.
-4) Map Sentry projects to repos with `SENTRY_PROJECT_REPO_MAP`, or set a single fallback `SENTRY_DEFAULT_REPO_URL`.
-
-Data mapping in Samba:
-- owner/repo: resolved from `SENTRY_PROJECT_REPO_MAP` or `SENTRY_DEFAULT_REPO_URL`
-- file path: extracted from breadcrumbs, message/title, metadata, or exception values
-
-Boundaries & privacy:
-- Sentry configuration belongs to your application; Samba only consumes the webhook
-- Samba opens PRs only; humans review/merge
-- Access tokens are never logged; only the necessary file content is fetched
+- Flow: users hit an error → Sentry posts webhook → Samba turns signal into a PR (no auto‑deploy).
+- Data received: stack, title/message, breadcrumbs, exception values, project metadata.
+- Checklist: (1) Enable Sentry in prod, (2) Add Webhook action to `https://<your-samba-host>/webhook`, (3) Set matching `WEBHOOK_SECRET`, (4) Configure `SENTRY_PROJECT_REPO_MAP` or `SENTRY_DEFAULT_REPO_URL`.
+- Boundaries: Sentry setup lives in your app; Samba consumes webhooks and opens PRs; tokens are never logged.
 
 ### Test Application (Next.js)
-We built a minimal app to validate the end-to-end loop: `yc-hackathon-social` on Next.js.  
-Repo: [github.com/AntonioAEMartins/yc-hackathon-social](https://github.com/AntonioAEMartins/yc-hackathon-social)
-
-In that repo we include a deliberately simple issue (e.g., “Change this line to a number, instead of a string: "Good Morning!"”) to demonstrate an automated fix.
+Minimal demo: Next.js repo [yc-hackathon-social](https://github.com/AntonioAEMartins/yc-hackathon-social) with an intentional simple bug to showcase the automated fix loop.
 
 ### Getting Started
-Prerequisites:
-- Node.js ≥ 20.9.0
-- GitHub token with repo permissions
-- OpenAI API key with GPT‑5 access
+Prerequisites: Node ≥ 20.9, GitHub token (repo scope), OpenAI API key (GPT‑5 access)
 
-Install and run:
+Run:
 
 ```bash
 npm install
@@ -115,21 +83,18 @@ npm run dev
 npm run start
 ```
 
-Mastra will start the local server and print the listening URL. The webhook is served at `/webhook`.
+Webhook: served at `/webhook`.
 
-Environment variables:
-- `OPENAI_API_KEY` or `OPENAI_API_KEY_GPT5`: API key for GPT‑5
-- `GPT5_MODEL` (optional): default `gpt-5`
-- `GITHUB_TOKEN` or `GITHUB_PERSONAL_ACCESS_TOKEN`: used for GitHub API
-- `WEBHOOK_SECRET` (optional): shared secret to verify incoming webhook signatures
-- `SENTRY_PROJECT_REPO_MAP` (optional): JSON map from Sentry project → `{ owner, repo, branch? }` or a GitHub URL
+Env vars:
+- `OPENAI_API_KEY` or `OPENAI_API_KEY_GPT5` (model via `GPT5_MODEL`, default `gpt-5`)
+- `GITHUB_TOKEN` or `GITHUB_PERSONAL_ACCESS_TOKEN`
+- `WEBHOOK_SECRET` (optional)
+- `SENTRY_PROJECT_REPO_MAP` (JSON) or `SENTRY_DEFAULT_REPO_URL`
   - Example: `{ "my-sentry-project": { "owner": "org", "repo": "service", "branch": "main" }, "default": "https://github.com/org/service" }`
-- `SENTRY_DEFAULT_REPO_URL` (optional): fallback GitHub repo URL `https://github.com/<owner>/<repo>`
 
 ### Quick Demo (Local)
-1) Export env vars (GitHub + OpenAI). Optionally set `SENTRY_DEFAULT_REPO_URL=https://github.com/AntonioAEMartins/yc-hackathon-social`.
-2) Start Samba: `npm run dev`
-3) Send a minimal webhook to trigger the flow:
+1) Export env vars; start Samba: `npm run dev`
+2) Trigger:
 
 ```bash
 curl -X POST "http://localhost:PORT/webhook" \
@@ -137,18 +102,12 @@ curl -X POST "http://localhost:PORT/webhook" \
   -H 'Sentry-Hook-Resource: event_alert' \
   -d '{
     "resource": "event_alert",
-    "data": {
-      "event": {
-        "message": "TypeError at src/app/page.tsx:42",
-        "breadcrumbs": { "values": [ { "data": { "arguments": [ { "stack": "at src/app/page.tsx:42:5\n..." } ] } } ] },
-        "metadata": { "title": "Demo error" }
-      }
-    },
+    "data": { "event": { "message": "TypeError at src/app/page.tsx:42" } },
     "project": "demo"
   }'
 ```
 
-Replace `PORT` with the printed server port. If `WEBHOOK_SECRET` is set, also add the correct `Sentry-Hook-Signature` header.
+Replace `PORT` accordingly. If `WEBHOOK_SECRET` is set, include the matching signature header.
 
 ### How It Works (End to End)
 - Webhook arrives → `parse-input` derives repo/path/line from Sentry event and optional mapping
@@ -163,11 +122,10 @@ Replace `PORT` with the printed server port. If `WEBHOOK_SECRET` is set, also ad
 - Deterministic steps: every API call is explicit and traced; fallback paths are conservative
 
 ### Determinism and Reliability
-- Deterministic orchestration: the path Parse → Resolve → Locate → Read → Propose → Commit → PR is fixed and auditable.
-- Non‑deterministic agents/tools: model outputs, GitHub search ranking, and external API responses can vary across runs.
-- Mitigations: smallest‑safe‑change instruction set, strict API checks, conservative fallbacks (direct path → code search), idempotent branch naming, and no auto‑merge/deploy.
-- Observability: each run has a `runId`; logs include step boundaries and inputs/outputs (sans secrets) for replay/debugging.
-- Repro tips: pin `GPT5_MODEL`, keep inputs stable, and note that identical inputs may still yield slightly different edits.
+- Fixed orchestration; LLM/tool outputs and external APIs can vary.
+- Mitigations: smallest‑safe‑change prompts, strict API checks, conservative fallbacks, idempotent branches, no auto‑merge/deploy.
+- Observability: `runId` + step logs (no secrets) for replay/debugging.
+- Repro: pin `GPT5_MODEL`; identical inputs may still vary slightly.
 
 ### Known Limitations / Next Steps
 - Tool call limits can apply depending on model/provider quotas
