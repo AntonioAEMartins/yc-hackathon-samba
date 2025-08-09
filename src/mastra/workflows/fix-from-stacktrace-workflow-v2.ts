@@ -1,5 +1,6 @@
 import { createStep, createWorkflow } from '@mastra/core/workflows';
 import { z } from 'zod';
+import { proposeFixGpt5Tool } from '../tools/propose-fix-gpt5-tool.js';
 
 const resolveToken = (inputToken?: string): string | undefined => {
   return (
@@ -36,6 +37,9 @@ const encodePath = (path: string): string =>
     .map((s) => encodeURIComponent(s))
     .join('/');
 
+// Simple run id generator for correlating logs across steps
+const generateRunId = (): string => `${Date.now()}-${Math.floor(Math.random() * 1e9).toString(36)}`;
+
 // Step 1: Parse input prompt for repo URL, explicit file path, and stack frames
 const parseInput = createStep({
   id: 'parse-input',
@@ -49,6 +53,7 @@ const parseInput = createStep({
     prBody: z.string().optional(),
   }),
   outputSchema: z.object({
+    runId: z.string(),
     prompt: z.string(),
     owner: z.string().optional(),
     repo: z.string().optional(),
@@ -63,6 +68,8 @@ const parseInput = createStep({
   }),
   execute: async ({ inputData }) => {
     if (!inputData) throw new Error('Input required');
+    const runId = generateRunId();
+    try { console.log('[v2/parse-input] in', { runId, promptSize: inputData.prompt.length }); } catch {}
     const text = inputData.prompt;
     const lines = text.split(/\r?\n/);
     const header = lines.find((l) => l.trim().length > 0);
@@ -99,7 +106,20 @@ const parseInput = createStep({
       }
     }
 
-    return {
+    // Fallback: look for repo-relative paths like src/...ext even if there is no explicit frame
+    if (!explicitPath && fileCandidates.length === 0) {
+      const genericPathRe = /(src\/[A-Za-z0-9_.\-\/]+\.(?:ts|tsx|js|jsx|mjs|cjs|py|rb|go|java|cs|php|md))/i;
+      for (const raw of lines) {
+        const m = genericPathRe.exec(raw);
+        if (m) {
+          fileCandidates.push({ pathOrName: m[1] });
+          break;
+        }
+      }
+    }
+
+    const out = {
+      runId,
       prompt: inputData.prompt,
       owner: inputData.owner,
       repo: inputData.repo,
@@ -112,6 +132,8 @@ const parseInput = createStep({
       explicitPath,
       fileCandidates,
     };
+    try { console.log('[v2/parse-input] out', { runId, hasRepoUrl: !!repoUrl, explicitPath, candidates: fileCandidates.length }); } catch {}
+    return out;
   },
 });
 
@@ -121,6 +143,7 @@ const resolveRepo = createStep({
   description: 'Resolve owner/repo and default branch (or ref from blob URL)',
   inputSchema: parseInput.outputSchema,
   outputSchema: z.object({
+    runId: z.string(),
     prompt: z.string(),
     owner: z.string(),
     repo: z.string(),
@@ -134,6 +157,7 @@ const resolveRepo = createStep({
   }),
   execute: async ({ inputData }) => {
     if (!inputData) throw new Error('Input required');
+    try { console.log('[v2/resolve-repo] in', { runId: inputData.runId, owner: !!inputData.owner, repo: !!inputData.repo, repoUrl: inputData.repoUrl }); } catch {}
     let owner = inputData.owner;
     let repo = inputData.repo;
     if ((!owner || !repo) && inputData.repoUrl) {
@@ -151,7 +175,8 @@ const resolveRepo = createStep({
     const repoData = await repoRes.json();
     let baseBranch: string = inputData.repoRef || (repoData.default_branch as string);
 
-    return {
+    const out = {
+      runId: inputData.runId,
       prompt: inputData.prompt,
       owner,
       repo,
@@ -163,6 +188,8 @@ const resolveRepo = createStep({
       fileCandidates: inputData.fileCandidates,
       explicitPath: inputData.explicitPath,
     };
+    try { console.log('[v2/resolve-repo] out', { runId: inputData.runId, owner, repo, baseBranch }); } catch {}
+    return out;
   },
 });
 
@@ -172,6 +199,7 @@ const locateFile = createStep({
   description: 'Choose candidate path or search by filename in repo',
   inputSchema: resolveRepo.outputSchema,
   outputSchema: z.object({
+    runId: z.string(),
     owner: z.string(),
     repo: z.string(),
     baseBranch: z.string(),
@@ -186,6 +214,7 @@ const locateFile = createStep({
   }),
   execute: async ({ inputData }) => {
     const token = resolveToken(inputData?.token);
+    try { console.log('[v2/locate-file] in', { runId: inputData.runId, explicitPath: inputData.explicitPath, candidates: inputData.fileCandidates.length }); } catch {}
     const top = inputData.fileCandidates[0];
     let candidatePath = inputData.explicitPath || (top ? top.pathOrName : '');
     if (!candidatePath) throw new Error('No file candidates or explicit path');
@@ -218,7 +247,8 @@ const locateFile = createStep({
       if (!item) throw new Error(`Could not locate ${basename} in ${inputData.owner}/${inputData.repo}`);
       candidatePath = item.path as string;
     }
-    return {
+    const out = {
+      runId: inputData.runId,
       owner: inputData.owner,
       repo: inputData.repo,
       baseBranch: inputData.baseBranch,
@@ -231,6 +261,8 @@ const locateFile = createStep({
       errorHeader: inputData.errorHeader,
       prompt: inputData.prompt,
     };
+    try { console.log('[v2/locate-file] out', { runId: inputData.runId, candidatePath }); } catch {}
+    return out;
   },
 });
 
@@ -240,6 +272,7 @@ const readFile = createStep({
   description: 'Fetch file content from GitHub',
   inputSchema: locateFile.outputSchema,
   outputSchema: z.object({
+    runId: z.string(),
     owner: z.string(),
     repo: z.string(),
     baseBranch: z.string(),
@@ -254,6 +287,7 @@ const readFile = createStep({
   }),
   execute: async ({ inputData }) => {
     const token = resolveToken(inputData?.token);
+    try { console.log('[v2/read-file] in', { runId: inputData.runId, candidatePath: inputData.candidatePath, baseBranch: inputData.baseBranch }); } catch {}
     const params = new URLSearchParams();
     params.set('ref', inputData.baseBranch);
     const fileUrl = `https://api.github.com/repos/${encodeURIComponent(inputData.owner)}/${encodeURIComponent(inputData.repo)}/contents/${encodePath(inputData.candidatePath)}?${params.toString()}`;
@@ -261,7 +295,8 @@ const readFile = createStep({
     await throwIfNotOk(res);
     const data = await res.json();
     const text = Buffer.from(data.content, 'base64').toString('utf8');
-    return {
+    const out = {
+      runId: inputData.runId,
       owner: inputData.owner,
       repo: inputData.repo,
       baseBranch: inputData.baseBranch,
@@ -274,15 +309,18 @@ const readFile = createStep({
       errorHeader: inputData.errorHeader,
       prompt: inputData.prompt,
     };
+    try { console.log('[v2/read-file] out', { runId: inputData.runId, hasText: !!text, sha: data.sha }); } catch {}
+    return out;
   },
 });
 
-// Step 5: Propose fix (LLM call should be via Agent/Recruiter outside of workflow; placeholder keeps content unchanged)
+// Step 5: Propose fix using GPT-5 tool with full context (file path, content, stack, line)
 const proposeFix = createStep({
   id: 'propose-fix',
-  description: 'Derive an updated file content (placeholder: no-op)',
+  description: 'Derive an updated file content via GPT-5',
   inputSchema: readFile.outputSchema,
   outputSchema: z.object({
+    runId: z.string(),
     owner: z.string(),
     repo: z.string(),
     baseBranch: z.string(),
@@ -294,17 +332,43 @@ const proposeFix = createStep({
     prBody: z.string().optional(),
   }),
   execute: async ({ inputData }) => {
-    return {
+    try { console.log('[v2/propose-fix] in', { runId: inputData.runId }); } catch {}
+
+    let updated = inputData.fileText;
+    try {
+      const toolRes = await proposeFixGpt5Tool.execute({
+        context: {
+          filePath: inputData.candidatePath,
+          fileText: inputData.fileText,
+          stack: inputData.prompt, // parse-input already embeds stack in prompt
+          errorHeader: inputData.errorHeader,
+          language: (/(\.ts|\.tsx)$/i.test(inputData.candidatePath)) ? 'TypeScript' : undefined,
+          line: (inputData as any).line,
+          column: (inputData as any).column,
+          prompt: inputData.prompt,
+        },
+      } as any);
+      if (toolRes?.updatedText && typeof toolRes.updatedText === 'string') {
+        updated = toolRes.updatedText;
+      }
+    } catch (err) {
+      try { console.error('[v2/propose-fix] gpt5_error', { runId: inputData.runId, err: String(err) }); } catch {}
+    }
+
+    const out = {
+      runId: inputData.runId,
       owner: inputData.owner,
       repo: inputData.repo,
       baseBranch: inputData.baseBranch,
       candidatePath: inputData.candidatePath,
       fileSha: inputData.fileSha,
-      updatedText: inputData.fileText, // no-op; integrate Agent/Recruiter externally
+      updatedText: updated,
       token: inputData.token,
       prTitle: inputData.prTitle,
       prBody: inputData.prBody,
     };
+    try { console.log('[v2/propose-fix] out', { runId: inputData.runId, changed: updated !== inputData.fileText }); } catch {}
+    return out;
   },
 });
 
@@ -314,6 +378,7 @@ const commitFix = createStep({
   description: 'Create feature branch and commit updated file',
   inputSchema: proposeFix.outputSchema,
   outputSchema: z.object({
+    runId: z.string(),
     owner: z.string(),
     repo: z.string(),
     branch: z.string(),
@@ -326,6 +391,28 @@ const commitFix = createStep({
   }),
   execute: async ({ inputData }) => {
     const token = resolveToken(inputData?.token);
+    try { console.log('[v2/commit-fix] in', { runId: inputData.runId, candidatePath: inputData.candidatePath, baseBranch: inputData.baseBranch }); } catch {}
+
+    // If no change, abort early to avoid empty commit
+    try {
+      const original = inputData.fileSha; // presence of sha indicates we fetched an existing file
+      const updatedText = inputData.updatedText ?? '';
+      if ((updatedText || '').length === 0) {
+        console.warn('[v2/commit-fix] empty updatedText, skipping commit', { runId: inputData.runId });
+        return {
+          runId: inputData.runId,
+          owner: inputData.owner,
+          repo: inputData.repo,
+          branch: inputData.baseBranch,
+          candidatePath: inputData.candidatePath,
+          commitSha: '',
+          newSha: original || '',
+          token: inputData.token,
+          prTitle: inputData.prTitle,
+          prBody: inputData.prBody,
+        };
+      }
+    } catch {}
     const branch = `fix/${Date.now()}`;
 
     // Create branch from default
@@ -358,7 +445,8 @@ const commitFix = createStep({
     await throwIfNotOk(putRes);
     const putData = await putRes.json();
 
-    return {
+    const out = {
+      runId: inputData.runId,
       owner: inputData.owner,
       repo: inputData.repo,
       branch,
@@ -369,6 +457,8 @@ const commitFix = createStep({
       prTitle: inputData.prTitle,
       prBody: inputData.prBody,
     };
+    try { console.log('[v2/commit-fix] out', { runId: inputData.runId, branch, commitSha: putData.commit?.sha }); } catch {}
+    return out;
   },
 });
 
@@ -380,6 +470,7 @@ const openPr = createStep({
   outputSchema: z.object({ number: z.number(), url: z.string(), state: z.string() }),
   execute: async ({ inputData }) => {
     const token = resolveToken(inputData?.token);
+    try { console.log('[v2/open-pr] in', { runId: inputData.runId, branch: inputData.branch, owner: inputData.owner, repo: inputData.repo }); } catch {}
     const repoUrl = `https://api.github.com/repos/${encodeURIComponent(inputData.owner)}/${encodeURIComponent(inputData.repo)}`;
     const repoRes = await fetch(repoUrl, { headers: buildHeaders(token, false) });
     await throwIfNotOk(repoRes);
@@ -397,7 +488,9 @@ const openPr = createStep({
     });
     await throwIfNotOk(res);
     const data = await res.json();
-    return { number: data.number, url: data.html_url ?? data.url, state: data.state };
+    const out = { number: data.number, url: data.html_url ?? data.url, state: data.state };
+    try { console.log('[v2/open-pr] out', { runId: inputData.runId, ...out }); } catch {}
+    return out;
   },
 });
 
@@ -416,4 +509,23 @@ export const fixFromStacktraceWorkflowV2 = createWorkflow({
 
 fixFromStacktraceWorkflowV2.commit();
 
-
+// Simple programmatic runner for environments where .start is not wired
+export async function startFixFromStacktraceV2(input: z.infer<typeof parseInput.inputSchema>) {
+  const runId = generateRunId();
+  console.log('[v2] manual-run begin', { runId });
+  try {
+    const p = await (parseInput as any).execute({ inputData: input });
+    p.runId = p.runId || runId;
+    const r = await (resolveRepo as any).execute({ inputData: p });
+    const l = await (locateFile as any).execute({ inputData: r });
+    const rf = await (readFile as any).execute({ inputData: l });
+    const pf = await (proposeFix as any).execute({ inputData: rf });
+    const cm = await (commitFix as any).execute({ inputData: pf });
+    const pr = await (openPr as any).execute({ inputData: cm });
+    console.log('[v2] manual-run done', { runId, pr });
+    return pr;
+  } catch (err) {
+    console.error('[v2] manual-run error', { runId, err: String(err) });
+    throw err;
+  }
+}
