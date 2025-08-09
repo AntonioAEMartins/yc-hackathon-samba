@@ -1,80 +1,44 @@
 import { createStep, createWorkflow } from '@mastra/core/workflows';
 import { z } from 'zod';
 
-const listReposStep = createStep({
-  id: 'list-repos',
-  description: 'List repositories for a given user (first page)',
-  inputSchema: z.object({
-    user: z.string().describe('GitHub username'),
-    per_page: z.number().min(1).max(100).default(30).optional(),
-    page: z.number().min(1).default(1).optional(),
-    token: z.string().optional(),
-  }),
-  outputSchema: z.object({
-    repositories: z.array(z.any()),
-    total: z.number(),
-  }),
-  execute: async ({ inputData, mastra }) => {
-    if (!inputData) throw new Error('Input required');
-    const agent = mastra?.getAgent('githubAgent');
-    if (!agent) throw new Error('GitHub agent not found');
+const resolveToken = (inputToken?: string): string | undefined => {
+  return (
+    inputToken ||
+    process.env.GITHUB_TOKEN ||
+    process.env.GITHUB_PERSONAL_ACCESS_TOKEN ||
+    undefined
+  );
+};
 
-    const result = await agent.tool('github-list-repos', {
-      user: inputData.user,
-      per_page: inputData.per_page ?? 30,
-      page: inputData.page ?? 1,
-      token: inputData.token,
-    });
+const buildHeaders = (token?: string, requireAuth: boolean = false): Record<string, string> => {
+  const headers: Record<string, string> = {
+    Accept: 'application/vnd.github+json',
+    'X-GitHub-Api-Version': '2022-11-28',
+  };
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  } else if (requireAuth) {
+    throw new Error('Missing GitHub token');
+  }
+  return headers;
+};
 
-    return result as { repositories: any[]; total: number };
-  },
-});
+const throwIfNotOk = async (res: any) => {
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`GitHub API error ${res.status}: ${body}`);
+  }
+};
 
-const readFileStep = createStep({
-  id: 'read-file',
-  description: 'Read file contents metadata from a repository',
-  inputSchema: z.object({
-    owner: z.string(),
-    repo: z.string(),
-    path: z.string(),
-    ref: z.string().optional(),
-    token: z.string().optional(),
-  }),
-  outputSchema: z.object({
-    content: z.string(),
-    encoding: z.string(),
-    sha: z.string(),
-    size: z.number(),
-  }),
-  execute: async ({ inputData, mastra }) => {
-    if (!inputData) throw new Error('Input required');
-    const agent = mastra?.getAgent('githubAgent');
-    if (!agent) throw new Error('GitHub agent not found');
+const encodePath = (path: string): string =>
+  path
+    .split('/')
+    .map((s) => encodeURIComponent(s))
+    .join('/');
 
-    try {
-      const result = await agent.tool('get-github-file', {
-        owner: inputData.owner,
-        repo: inputData.repo,
-        path: inputData.path,
-        ref: inputData.ref,
-        token: inputData.token,
-      });
-      return result as { content: string; encoding: string; sha: string; size: number };
-    } catch (err: any) {
-      const message = String(err?.message || err);
-      // Clarify common 404 causes
-      if (message.includes('404')) {
-        throw new Error(
-          `${message} — Check that the owner/repo exist, the path is correct for the specified ref, and that you have access (private repo requires a token).`,
-        );
-      }
-      throw err;
-    }
-  },
-});
-
-export const githubWorkflow = createWorkflow({
-  id: 'github-workflow',
+const runGithubOps = createStep({
+  id: 'run-github-ops',
+  description: 'List repos for a user and read a file from a repo',
   inputSchema: z.object({
     listUser: z.string().describe('GitHub username to list repos for'),
     fileOwner: z.string(),
@@ -93,23 +57,56 @@ export const githubWorkflow = createWorkflow({
       size: z.number(),
     }),
   }),
-})
-  .then(listReposStep, ({ inputData }) => ({
-    user: inputData.listUser,
-    token: inputData.token,
-  }))
-  .then(readFileStep, ({ inputData }) => ({
-    owner: inputData.fileOwner,
-    repo: inputData.fileRepo,
-    path: inputData.filePath,
-    ref: inputData.fileRef,
-    token: inputData.token,
-  }))
-  .map(({ outputs }) => ({
-    repositories: outputs[0].repositories,
-    total: outputs[0].total,
-    file: outputs[1],
-  }));
+  execute: async ({ inputData }) => {
+    if (!inputData) throw new Error('Input required');
+    const token = resolveToken(inputData.token);
+
+    const listParams = new URLSearchParams();
+    listParams.set('per_page', '30');
+    listParams.set('page', '1');
+    listParams.set('type', 'all');
+    const listUrl = `https://api.github.com/users/${encodeURIComponent(inputData.listUser)}/repos?${listParams.toString()}`;
+    const listRes = await fetch(listUrl, { headers: buildHeaders(token, false) });
+    await throwIfNotOk(listRes);
+    const repositories = (await listRes.json()) as any[];
+
+    const fileParams = new URLSearchParams();
+    if (inputData.fileRef) fileParams.set('ref', inputData.fileRef);
+    const fileUrl = `https://api.github.com/repos/${encodeURIComponent(inputData.fileOwner)}/${encodeURIComponent(
+      inputData.fileRepo,
+    )}/contents/${encodePath(inputData.filePath)}${fileParams.toString() ? `?${fileParams.toString()}` : ''}`;
+    const fileRes = await fetch(fileUrl, { headers: buildHeaders(token, false) });
+    try {
+      await throwIfNotOk(fileRes);
+    } catch (err: any) {
+      const message = String(err?.message || err);
+      if (message.includes('404')) {
+        throw new Error(
+          `${message} — Check that the owner/repo exist, the path is correct for the specified ref, and that you have access (private repo requires a token).`,
+        );
+      }
+      throw err;
+    }
+    const fileData = await fileRes.json();
+
+    return {
+      repositories,
+      total: repositories.length,
+      file: {
+        content: fileData.content,
+        encoding: fileData.encoding,
+        sha: fileData.sha,
+        size: fileData.size,
+      },
+    };
+  },
+});
+
+const githubWorkflow = createWorkflow({
+  id: 'github-workflow',
+  inputSchema: runGithubOps.inputSchema,
+  outputSchema: runGithubOps.outputSchema,
+}).then(runGithubOps);
 
 githubWorkflow.commit();
 
