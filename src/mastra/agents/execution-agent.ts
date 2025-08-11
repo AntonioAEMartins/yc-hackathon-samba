@@ -5,6 +5,7 @@ import { LibSQLStore } from '@mastra/libsql';
 
 import { githubCommitOrUpdateFileTool } from '../tools/github-commit-or-update-file-tool.js';
 import { githubDecodedFileTool } from '../tools/github-decoded-file-tool.js';
+import { githubMCP } from '../mcps/github-mcp-client.js';
 
 export const executionAgent = new Agent({
   name: 'Execution Agent',
@@ -18,10 +19,11 @@ Your goals:
 Output a concise JSON summary: { branch, commitSha, newSha, path }.
 `,
   model: openai('gpt-5-nano'),
-  tools: {
-    'github-commit-or-update-file': githubCommitOrUpdateFileTool,
-    'get-github-file-decoded': githubDecodedFileTool,
-  },
+  // tools: {
+  //   'github-commit-or-update-file': githubCommitOrUpdateFileTool,
+  //   'get-github-file-decoded': githubDecodedFileTool,
+  // },
+  tools: await githubMCP.getTools(),
   memory: new Memory({
     storage: new LibSQLStore({ url: 'file:../mastra.db' }),
   }),

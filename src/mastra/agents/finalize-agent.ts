@@ -4,6 +4,7 @@ import { Memory } from '@mastra/memory';
 import { LibSQLStore } from '@mastra/libsql';
 
 import { githubCreatePrTool } from '../tools/github-git-ops-tools.js';
+import { githubMCP } from '../mcps/github-mcp-client.js';
 
 export const finalizeAgent = new Agent({
   name: 'Finalize Agent',
@@ -13,9 +14,10 @@ Open a PR from headBranch to base (default to repo default). Include a clear tit
 Output JSON: { number, url, state }.
 `,
   model: openai('gpt-5-nano'),
-  tools: {
-    'github-create-pr': githubCreatePrTool,
-  },
+  // tools: {
+  //   'github-create-pr': githubCreatePrTool,
+  // },
+  tools: await githubMCP.getTools(),
   memory: new Memory({
     storage: new LibSQLStore({ url: 'file:../mastra.db' }),
   }),

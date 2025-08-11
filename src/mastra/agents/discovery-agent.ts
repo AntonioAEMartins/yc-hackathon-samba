@@ -8,6 +8,7 @@ import { githubGetRepoByUrlTool } from '../tools/github-get-repo-by-url-tool.js'
 import { githubSearchCodeTool } from '../tools/github-search-code-tool.js';
 import { githubFileTool } from '../tools/github-file-tool.js';
 import { githubDecodedFileTool } from '../tools/github-decoded-file-tool.js';
+import { githubMCP } from '../mcps/github-mcp-client.js';
 
 export const discoveryAgent = new Agent({
   name: 'Discovery Agent',
@@ -24,13 +25,14 @@ Output a concise JSON summary at the end with fields: { owner, repo, candidatePa
 Keep tool usage minimal and do not expose tokens.
 `,
   model: openai('gpt-5-nano'),
-  tools: {
-    'parse-stack-trace': parseStackTraceTool,
-    'github-get-repo-by-url': githubGetRepoByUrlTool,
-    'github-search-code': githubSearchCodeTool,
-    'get-github-file': githubFileTool,
-    'get-github-file-decoded': githubDecodedFileTool,
-  },
+  // tools: {
+  //   'parse-stack-trace': parseStackTraceTool,
+  //   'github-get-repo-by-url': githubGetRepoByUrlTool,
+  //   'github-search-code': githubSearchCodeTool,
+  //   'get-github-file': githubFileTool,
+  //   'get-github-file-decoded': githubDecodedFileTool,
+  // },
+  tools: await githubMCP.getTools(),
   memory: new Memory({
     storage: new LibSQLStore({ url: 'file:../mastra.db' }),
   }),

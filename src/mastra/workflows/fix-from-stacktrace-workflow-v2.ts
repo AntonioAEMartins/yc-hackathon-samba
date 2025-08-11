@@ -6,8 +6,7 @@ import { initFreestyleSandbox } from '../freestyle_init.js';
 const resolveToken = (inputToken?: string): string | undefined => {
   return (
     inputToken ||
-    process.env.GITHUB_TOKEN ||
-    process.env.GITHUB_PERSONAL_ACCESS_TOKEN ||
+    process.env.GITHUB_MCP_PAT ||
     undefined
   );
 };
@@ -40,6 +39,77 @@ const encodePath = (path: string): string =>
 
 // Simple run id generator for correlating logs across steps
 const generateRunId = (): string => `${Date.now()}-${Math.floor(Math.random() * 1e9).toString(36)}`;
+
+// Step 0: Prepare input. In dev, synthesize a fake Sentry prompt when none is provided
+const prepareInput = createStep({
+  id: 'prepare-input',
+  description: 'Prepare workflow input. In dev, generate a fake Sentry stack/prompt when none provided.',
+  inputSchema: z.object({
+    prompt: z.string().optional(),
+    owner: z.string().optional(),
+    repo: z.string().optional(),
+    token: z.string().optional(),
+    prTitle: z.string().optional(),
+    prBody: z.string().optional(),
+  }),
+  outputSchema: z.object({
+    prompt: z.string(),
+    owner: z.string().optional(),
+    repo: z.string().optional(),
+    token: z.string().optional(),
+    prTitle: z.string().optional(),
+    prBody: z.string().optional(),
+  }),
+  execute: async ({ inputData }) => {
+    const env = (process.env.ENVIRONMENT || '').toLowerCase();
+    const hasPrompt = !!inputData?.prompt && inputData.prompt.trim().length > 0;
+    if (env === 'dev' && !hasPrompt) {
+      // Defaults for the demo repo and file provided by the user
+      const owner = inputData?.owner || 'AntonioAEMartins';
+      const repo = inputData?.repo || 'yc-hackathon-social';
+      const filePath = 'src/server/friends.routes.ts';
+      const repoUrl = `https://github.com/${owner}/${repo}/blob/main/${filePath}`;
+      const prTitle = inputData?.prTitle || 'Automated fix from Sentry alert (dev)';
+
+      // Minimal synthetic stack referencing the problematic file
+      const stackLines: string[] = [
+        'Error: Intentional test error in src/server/friends.routes.ts',
+        '    at POST /friends (src/server/friends.routes.ts:100:10)',
+        '    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)',
+      ];
+      const sections: string[] = [];
+      sections.push('Stack trace:');
+      sections.push(stackLines.join('\n'));
+      sections.push('\nRepo URL:');
+      sections.push(repoUrl);
+      sections.push('\nFile relative path:');
+      sections.push(filePath);
+      const prompt = sections.join('\n');
+
+      try { console.log('[v2/prepare-input] dev synthetic prompt generated'); } catch {}
+      return {
+        prompt: String(prompt),
+        owner,
+        repo,
+        token: inputData?.token,
+        prTitle,
+        prBody: inputData?.prBody,
+      };
+    }
+
+    if (!inputData || !hasPrompt) {
+      throw new Error('Input prompt required');
+    }
+    return {
+      prompt: String(inputData.prompt),
+      owner: inputData.owner,
+      repo: inputData.repo,
+      token: inputData.token,
+      prTitle: inputData.prTitle,
+      prBody: inputData.prBody,
+    };
+  },
+});
 
 // Step 1: Parse input prompt for repo URL, explicit file path, and stack frames
 const parseInput = createStep({
@@ -524,23 +594,53 @@ const openPr = createStep({
     const repoRes = await fetch(repoUrl, { headers: buildHeaders(token, false) });
     await throwIfNotOk(repoRes);
     const repoData = await repoRes.json();
-    let base = repoData.default_branch as string;
 
-    // Prefer dev branch when available
+    // Determine source base branch to branch off from (prefer dev when it exists)
+    let sourceBase: string = (repoData.default_branch as string) || 'main';
     try {
       const devUrl = `${repoUrl}/branches/dev`;
       const devRes = await fetch(devUrl, { headers: buildHeaders(token, false) });
-      if (devRes.ok) base = 'dev';
+      if (devRes.ok) sourceBase = 'dev';
     } catch {}
+
+    // Derive a timestamp from the fix branch (fix/<timestamp>), fallback to now
+    let ts = String(Date.now());
+    try {
+      const m = /^fix\/(\d+)/.exec(inputData.branch || '');
+      if (m && m[1]) ts = m[1];
+    } catch {}
+    const newBaseBranch = `dev-${ts}`;
+
+    // Create the new base branch refs/heads/dev-<timestamp> from sourceBase
+    try {
+      const refUrl = `${repoUrl}/git/ref/heads/${encodeURIComponent(sourceBase)}`;
+      const refRes = await fetch(refUrl, { headers: buildHeaders(token, true) });
+      await throwIfNotOk(refRes);
+      const refData = await refRes.json();
+      const baseSha: string = refData.object?.sha || refData.sha;
+
+      const createRefUrl = `${repoUrl}/git/refs`;
+      const createRes = await fetch(createRefUrl, {
+        method: 'POST',
+        headers: { ...buildHeaders(token, true), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ref: `refs/heads/${newBaseBranch}`, sha: baseSha }),
+      });
+      if (!createRes.ok && createRes.status !== 422) {
+        await throwIfNotOk(createRes);
+      }
+    } catch (err) {
+      try { console.error('[v2/open-pr] create_base_branch_error', { err: String(err) }); } catch {}
+      throw err;
+    }
 
     const title = inputData.prTitle || 'fix: automated fix from stack trace';
     const body = inputData.prBody || 'Automated fix generated by workflow.';
 
-    const prsUrl = `https://api.github.com/repos/${encodeURIComponent(inputData.owner)}/${encodeURIComponent(inputData.repo)}/pulls`;
+    const prsUrl = `${repoUrl}/pulls`;
     const res = await fetch(prsUrl, {
       method: 'POST',
       headers: { ...buildHeaders(token, true), 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title, head: inputData.branch, base, body }),
+      body: JSON.stringify({ title, head: inputData.branch, base: newBaseBranch, body }),
     });
     await throwIfNotOk(res);
     const data = await res.json();
@@ -625,9 +725,10 @@ const initFreestyle = createStep({
 
 export const fixFromStacktraceWorkflowV2 = createWorkflow({
   id: 'fix-from-stacktrace-v2',
-  inputSchema: parseInput.inputSchema,
+  inputSchema: prepareInput.inputSchema,
   outputSchema: initFreestyle.outputSchema,
 })
+  .then(prepareInput)
   .then(parseInput)
   .then(resolveRepo)
   .then(locateFile)
@@ -641,11 +742,12 @@ export const fixFromStacktraceWorkflowV2 = createWorkflow({
 fixFromStacktraceWorkflowV2.commit();
 
 // Simple programmatic runner for environments where .start is not wired
-export async function startFixFromStacktraceV2(input: z.infer<typeof parseInput.inputSchema>) {
+export async function startFixFromStacktraceV2(input: z.infer<typeof prepareInput.inputSchema>) {
   const runId = generateRunId();
   console.log('[v2] manual-run begin', { runId });
   try {
-    const p = await (parseInput as any).execute({ inputData: input });
+    const prep = await (prepareInput as any).execute({ inputData: input });
+    const p = await (parseInput as any).execute({ inputData: prep });
     p.runId = p.runId || runId;
     const r = await (resolveRepo as any).execute({ inputData: p });
     const l = await (locateFile as any).execute({ inputData: r });

@@ -20,6 +20,7 @@ import {
 } from '../tools/github-git-ops-tools.js';
 import { githubCommitOrUpdateFileTool } from '../tools/github-commit-or-update-file-tool.js';
 import { parseStackTraceTool } from '../tools/stack-trace-parser-tool.js';
+import { githubMCP } from '../mcps/github-mcp-client.js';
 
 export const githubAgent = new Agent({
   name: 'GitHub Agent',
@@ -40,22 +41,23 @@ Follow these rules:
 - For file paths, preserve slashes and encode segments.
   `,
   model: openai('gpt-5-nano'),
-  tools: {
-    'get-github-file': githubFileTool,
-    'get-github-file-decoded': githubDecodedFileTool,
-    'github-list-repos': githubListReposTool,
-    'github-search-code': githubSearchCodeTool,
-    'github-create-branch': githubCreateBranchTool,
-    'github-commit-file': githubCommitFileTool,
-    'github-create-pr': githubCreatePrTool,
-    'github-approve-pr': githubApprovePrTool,
-    'github-get-repo-by-url': githubGetRepoByUrlTool,
-    'github-commit-to-dev': githubCommitToDevTool,
-    'github-open-dev-pr-to-main': githubOpenDevPrToMainTool,
-    'github-merge-pr': githubMergePrTool,
-    'parse-stack-trace': parseStackTraceTool,
-    'github-commit-or-update-file': githubCommitOrUpdateFileTool,
-  },
+  tools: await githubMCP.getTools(),
+  // tools: {
+  //   'get-github-file': githubFileTool,
+  //   'get-github-file-decoded': githubDecodedFileTool,
+  //   'github-list-repos': githubListReposTool,
+  //   'github-search-code': githubSearchCodeTool,
+  //   'github-create-branch': githubCreateBranchTool,
+  //   'github-commit-file': githubCommitFileTool,
+  //   'github-create-pr': githubCreatePrTool,
+  //   'github-approve-pr': githubApprovePrTool,
+  //   'github-get-repo-by-url': githubGetRepoByUrlTool,
+  //   'github-commit-to-dev': githubCommitToDevTool,
+  //   'github-open-dev-pr-to-main': githubOpenDevPrToMainTool,
+  //   'github-merge-pr': githubMergePrTool,
+  //   'parse-stack-trace': parseStackTraceTool,
+  //   'github-commit-or-update-file': githubCommitOrUpdateFileTool,
+  // },
   memory: new Memory({
     storage: new LibSQLStore({
       url: 'file:../mastra.db',
