@@ -40,8 +40,6 @@ export const mastra = new Mastra({
       registerApiRoute('/webhook', {
         method: 'POST',
         handler: async (c) => {
-          const mastra = c.get('mastra');
-
           const rawText = await c.req.text();
           const signature = c.req.header('Sentry-Hook-Signature') || c.req.header('X-Sentry-Signature');
           const resource = c.req.header('Sentry-Hook-Resource');
