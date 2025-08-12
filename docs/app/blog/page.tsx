@@ -129,27 +129,6 @@ export default function BlogPost() {
               behind the fix.
             </p>
 
-            <h2 className="text-2xl font-bold text-charcoal mt-12 mb-6">Results & Impact</h2>
-
-            <p className="text-gray-700 leading-relaxed mb-6">
-              During our hackathon testing, Samba achieved remarkable results:
-            </p>
-
-            <ul className="list-disc list-inside space-y-2 text-gray-700 mb-6">
-              <li>
-                <strong>3.2 minute average response time</strong> from error detection to PR creation
-              </li>
-              <li>
-                <strong>87% fix accuracy rate</strong> for common JavaScript and TypeScript errors
-              </li>
-              <li>
-                <strong>Zero false positives</strong> in critical error handling
-              </li>
-              <li>
-                <strong>24/7 autonomous operation</strong> without human intervention
-              </li>
-            </ul>
-
             <h2 className="text-2xl font-bold text-charcoal mt-12 mb-6">The Future of Autonomous Development</h2>
 
             <p className="text-gray-700 leading-relaxed mb-6">
