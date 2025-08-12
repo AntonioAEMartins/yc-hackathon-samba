@@ -42,24 +42,42 @@ export default function BlogPost() {
           <div className="flex items-center gap-6 mb-8">
             <div className="flex items-center gap-3">
               <img
-                src="/placeholder.svg?height=48&width=48"
+                src="/antonio.jpg"
                 alt="Antonio Martins"
                 className="w-12 h-12 rounded-full object-cover"
               />
               <div>
                 <div className="font-semibold text-charcoal">Antonio Martins</div>
-                <div className="text-sm text-gray-600">Co-creator</div>
+                <div className="text-sm text-gray-600">
+                  <Link
+                    href="https://twitter.com/theTonMartins"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:underline"
+                  >
+                    @theTonMartins
+                  </Link>
+                </div>
               </div>
             </div>
             <div className="flex items-center gap-3">
               <img
-                src="/placeholder.svg?height=48&width=48"
+                src="/pedro.jpg"
                 alt="Pedro Stanzani"
                 className="w-12 h-12 rounded-full object-cover"
               />
               <div>
                 <div className="font-semibold text-charcoal">Pedro Stanzani</div>
-                <div className="text-sm text-gray-600">Co-creator</div>
+                <div className="text-sm text-gray-600">
+                  <Link
+                    href="https://twitter.com/pedrostanzani"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:underline"
+                  >
+                    @pedrostanzani
+                  </Link>
+                </div>
               </div>
             </div>
           </div>
