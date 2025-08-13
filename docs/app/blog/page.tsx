@@ -22,7 +22,7 @@ export default function BlogPost() {
           <div className="flex items-center gap-4 text-sm text-gray-600 mb-6">
             <div className="flex items-center gap-1">
               <Calendar className="w-4 h-4" />
-              <span>January 15, 2025</span>
+              <span>August 11, 2025</span>
             </div>
             <div className="flex items-center gap-1">
               <Clock className="w-4 h-4" />
