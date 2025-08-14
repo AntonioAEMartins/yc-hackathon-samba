@@ -2,6 +2,7 @@ import { createStep, createWorkflow } from '@mastra/core/workflows';
 import { z } from 'zod';
 import { proposeFixGpt5Tool } from '../tools/propose-fix-gpt5-tool.js';
 import { initFreestyleSandbox } from '../freestyle_init.js';
+import { githubMCP } from '../mcps/github-mcp-client.js';
 
 const resolveToken = (inputToken?: string): string | undefined => {
   return (
@@ -11,31 +12,14 @@ const resolveToken = (inputToken?: string): string | undefined => {
   );
 };
 
-const buildHeaders = (token?: string, requireAuth: boolean = false): Record<string, string> => {
-  const headers: Record<string, string> = {
-    Accept: 'application/vnd.github+json',
-    'X-GitHub-Api-Version': '2022-11-28',
-  };
-  if (token) {
-    headers.Authorization = `Bearer ${token}`;
-  } else if (requireAuth) {
-    throw new Error('Missing GitHub token');
+// Minimal MCP helper wrappers
+async function mcpCall(toolName: string, args: Record<string, unknown>) {
+  const res: any = await (githubMCP as any).callTool(toolName, args);
+  if (res && typeof res === 'object' && 'error' in res && res.error) {
+    throw new Error(String((res as any).error));
   }
-  return headers;
-};
-
-const throwIfNotOk = async (res: any) => {
-  if (!res.ok) {
-    const body = await res.text();
-    throw new Error(`GitHub API error ${res.status}: ${body}`);
-  }
-};
-
-const encodePath = (path: string): string =>
-  path
-    .split('/')
-    .map((s) => encodeURIComponent(s))
-    .join('/');
+  return (res && (res.data ?? res)) as any;
+}
 
 // Simple run id generator for correlating logs across steps
 const generateRunId = (): string => `${Date.now()}-${Math.floor(Math.random() * 1e9).toString(36)}`;
@@ -86,7 +70,7 @@ const prepareInput = createStep({
       sections.push(filePath);
       const prompt = sections.join('\n');
 
-      try { console.log('[v2/prepare-input] dev synthetic prompt generated'); } catch {}
+      try { console.log('[samba/prepare-input] dev synthetic prompt generated'); } catch {}
       return {
         prompt: String(prompt),
         owner,
@@ -140,7 +124,7 @@ const parseInput = createStep({
   execute: async ({ inputData }) => {
     if (!inputData) throw new Error('Input required');
     const runId = generateRunId();
-    try { console.log('[v2/parse-input] in', { runId, promptSize: inputData.prompt.length }); } catch {}
+    try { console.log('[samba/parse-input] in', { runId, promptSize: inputData.prompt.length }); } catch {}
     const text = inputData.prompt;
     const lines = text.split(/\r?\n/);
     const header = lines.find((l) => l.trim().length > 0);
@@ -223,7 +207,7 @@ const parseInput = createStep({
       explicitPath,
       fileCandidates,
     };
-    try { console.log('[v2/parse-input] out', { runId, hasRepoUrl: !!repoUrl, explicitPath, candidates: fileCandidates.length }); } catch {}
+    try { console.log('[samba/parse-input] out', { runId, hasRepoUrl: !!repoUrl, explicitPath, candidates: fileCandidates.length }); } catch {}
     return out;
   },
 });
@@ -248,7 +232,7 @@ const resolveRepo = createStep({
   }),
   execute: async ({ inputData }) => {
     if (!inputData) throw new Error('Input required');
-    try { console.log('[v2/resolve-repo] in', { runId: inputData.runId, owner: !!inputData.owner, repo: !!inputData.repo, repoUrl: inputData.repoUrl }); } catch {}
+    try { console.log('[samba/resolve-repo] in', { runId: inputData.runId, owner: !!inputData.owner, repo: !!inputData.repo, repoUrl: inputData.repoUrl }); } catch {}
     let owner = inputData.owner;
     let repo = inputData.repo;
     if ((!owner || !repo) && inputData.repoUrl) {
@@ -279,7 +263,7 @@ const resolveRepo = createStep({
       fileCandidates: inputData.fileCandidates,
       explicitPath: inputData.explicitPath,
     };
-    try { console.log('[v2/resolve-repo] out', { runId: inputData.runId, owner, repo, baseBranch }); } catch {}
+    try { console.log('[samba/resolve-repo] out', { runId: inputData.runId, owner, repo, baseBranch }); } catch {}
     return out;
   },
 });
@@ -305,7 +289,7 @@ const locateFile = createStep({
   }),
   execute: async ({ inputData }) => {
     const token = resolveToken(inputData?.token);
-    try { console.log('[v2/locate-file] in', { runId: inputData.runId, explicitPath: inputData.explicitPath, candidates: inputData.fileCandidates.length }); } catch {}
+    try { console.log('[samba/locate-file] in', { runId: inputData.runId, explicitPath: inputData.explicitPath, candidates: inputData.fileCandidates.length }); } catch {}
     const top = inputData.fileCandidates[0];
     let candidatePath = inputData.explicitPath || (top ? top.pathOrName : '');
     if (!candidatePath) throw new Error('No file candidates or explicit path');
@@ -355,7 +339,7 @@ const locateFile = createStep({
         throw new Error(`Could not locate ${basenameRaw} in ${inputData.owner}/${inputData.repo}`);
       }
       candidatePath = pickedPath;
-      try { console.log('[v2/locate-file] fallback_search', { basename: basenameRaw, pickedName, candidatePath }); } catch {}
+      try { console.log('[samba/locate-file] fallback_search', { basename: basenameRaw, pickedName, candidatePath }); } catch {}
     }
     const out = {
       runId: inputData.runId,
@@ -371,7 +355,7 @@ const locateFile = createStep({
       errorHeader: inputData.errorHeader,
       prompt: inputData.prompt,
     };
-    try { console.log('[v2/locate-file] out', { runId: inputData.runId, candidatePath }); } catch {}
+    try { console.log('[samba/locate-file] out', { runId: inputData.runId, candidatePath }); } catch {}
     return out;
   },
 });
@@ -397,7 +381,7 @@ const readFile = createStep({
   }),
   execute: async ({ inputData }) => {
     const token = resolveToken(inputData?.token);
-    try { console.log('[v2/read-file] in', { runId: inputData.runId, candidatePath: inputData.candidatePath, baseBranch: inputData.baseBranch }); } catch {}
+    try { console.log('[samba/read-file] in', { runId: inputData.runId, candidatePath: inputData.candidatePath, baseBranch: inputData.baseBranch }); } catch {}
     const params = new URLSearchParams();
     params.set('ref', inputData.baseBranch);
     const fileUrl = `https://api.github.com/repos/${encodeURIComponent(inputData.owner)}/${encodeURIComponent(inputData.repo)}/contents/${encodePath(inputData.candidatePath)}?${params.toString()}`;
@@ -419,7 +403,7 @@ const readFile = createStep({
       errorHeader: inputData.errorHeader,
       prompt: inputData.prompt,
     };
-    try { console.log('[v2/read-file] out', { runId: inputData.runId, hasText: !!text, sha: data.sha }); } catch {}
+    try { console.log('[samba/read-file] out', { runId: inputData.runId, hasText: !!text, sha: data.sha }); } catch {}
     return out;
   },
 });
@@ -442,7 +426,7 @@ const proposeFix = createStep({
     prBody: z.string().optional(),
   }),
   execute: async ({ inputData }) => {
-    try { console.log('[v2/propose-fix] in', { runId: inputData.runId }); } catch {}
+    try { console.log('[samba/propose-fix] in', { runId: inputData.runId }); } catch {}
 
     let updated = inputData.fileText;
     try {
@@ -462,7 +446,7 @@ const proposeFix = createStep({
         updated = toolRes.updatedText;
       }
     } catch (err) {
-      try { console.error('[v2/propose-fix] gpt5_error', { runId: inputData.runId, err: String(err) }); } catch {}
+      try { console.error('[samba/propose-fix] gpt5_error', { runId: inputData.runId, err: String(err) }); } catch {}
     }
 
     const out = {
@@ -477,7 +461,7 @@ const proposeFix = createStep({
       prTitle: inputData.prTitle,
       prBody: inputData.prBody,
     };
-    try { console.log('[v2/propose-fix] out', { runId: inputData.runId, changed: updated !== inputData.fileText }); } catch {}
+    try { console.log('[samba/propose-fix] out', { runId: inputData.runId, changed: updated !== inputData.fileText }); } catch {}
     return out;
   },
 });
@@ -501,14 +485,14 @@ const commitFix = createStep({
   }),
   execute: async ({ inputData }) => {
     const token = resolveToken(inputData?.token);
-    try { console.log('[v2/commit-fix] in', { runId: inputData.runId, candidatePath: inputData.candidatePath, baseBranch: inputData.baseBranch }); } catch {}
+    try { console.log('[samba/commit-fix] in', { runId: inputData.runId, candidatePath: inputData.candidatePath, baseBranch: inputData.baseBranch }); } catch {}
 
     // If no change, abort early to avoid empty commit
     try {
       const original = inputData.fileSha; // presence of sha indicates we fetched an existing file
       const updatedText = inputData.updatedText ?? '';
       if ((updatedText || '').length === 0) {
-        console.warn('[v2/commit-fix] empty updatedText, skipping commit', { runId: inputData.runId });
+        console.warn('[samba/commit-fix] empty updatedText, skipping commit', { runId: inputData.runId });
         return {
           runId: inputData.runId,
           owner: inputData.owner,
@@ -567,7 +551,7 @@ const commitFix = createStep({
       prTitle: inputData.prTitle,
       prBody: inputData.prBody,
     };
-    try { console.log('[v2/commit-fix] out', { runId: inputData.runId, branch, commitSha: putData.commit?.sha }); } catch {}
+    try { console.log('[samba/commit-fix] out', { runId: inputData.runId, branch, commitSha: putData.commit?.sha }); } catch {}
     return out;
   },
 });
@@ -589,7 +573,7 @@ const openPr = createStep({
   }),
   execute: async ({ inputData }) => {
     const token = resolveToken(inputData?.token);
-    try { console.log('[v2/open-pr] in', { runId: inputData.runId, branch: inputData.branch, owner: inputData.owner, repo: inputData.repo }); } catch {}
+    try { console.log('[samba/open-pr] in', { runId: inputData.runId, branch: inputData.branch, owner: inputData.owner, repo: inputData.repo }); } catch {}
     const repoUrl = `https://api.github.com/repos/${encodeURIComponent(inputData.owner)}/${encodeURIComponent(inputData.repo)}`;
     const repoRes = await fetch(repoUrl, { headers: buildHeaders(token, false) });
     await throwIfNotOk(repoRes);
@@ -616,7 +600,7 @@ const openPr = createStep({
       const refUrl = `${repoUrl}/git/ref/heads/${encodeURIComponent(sourceBase)}`;
       const refRes = await fetch(refUrl, { headers: buildHeaders(token, true) });
       await throwIfNotOk(refRes);
-      const refData = await refRes.json();
+      const refData = await res.json();
       const baseSha: string = refData.object?.sha || refData.sha;
 
       const createRefUrl = `${repoUrl}/git/refs`;
@@ -629,7 +613,7 @@ const openPr = createStep({
         await throwIfNotOk(createRes);
       }
     } catch (err) {
-      try { console.error('[v2/open-pr] create_base_branch_error', { err: String(err) }); } catch {}
+      try { console.error('[samba/open-pr] create_base_branch_error', { err: String(err) }); } catch {}
       throw err;
     }
 
@@ -654,7 +638,7 @@ const openPr = createStep({
       url: data.html_url ?? data.url,
       state: data.state,
     };
-    try { console.log('[v2/open-pr] out', out); } catch {}
+    try { console.log('[samba/open-pr] out', out); } catch {}
     return out;
   },
 });
@@ -673,11 +657,11 @@ const mergePr = createStep({
   }),
   execute: async ({ inputData }) => {
     const token = resolveToken(inputData?.token);
-    try { console.log('[v2/merge-pr] in', { runId: inputData.runId, number: inputData.number, owner: inputData.owner, repo: inputData.repo }); } catch {}
+    try { console.log('[samba/merge-pr] in', { runId: (inputData as any).runId, number: inputData.number, owner: (inputData as any).owner, repo: (inputData as any).repo }); } catch {}
 
     // Best-effort approve (ignore failures, as many repos do not require/allow explicit approvals via token)
     try {
-      const reviewsUrl = `https://api.github.com/repos/${encodeURIComponent(inputData.owner)}/${encodeURIComponent(inputData.repo)}/pulls/${inputData.number}/reviews`;
+      const reviewsUrl = `https://api.github.com/repos/${encodeURIComponent((inputData as any).owner)}/${encodeURIComponent((inputData as any).repo)}/pulls/${inputData.number}/reviews`;
       await fetch(reviewsUrl, {
         method: 'POST',
         headers: { ...buildHeaders(token, true), 'Content-Type': 'application/json' },
@@ -686,7 +670,7 @@ const mergePr = createStep({
     } catch {}
 
     // Merge
-    const mergeUrl = `https://api.github.com/repos/${encodeURIComponent(inputData.owner)}/${encodeURIComponent(inputData.repo)}/pulls/${inputData.number}/merge`;
+    const mergeUrl = `https://api.github.com/repos/${encodeURIComponent((inputData as any).owner)}/${encodeURIComponent((inputData as any).repo)}/pulls/${inputData.number}/merge`;
     const res = await fetch(mergeUrl, {
       method: 'PUT',
       headers: { ...buildHeaders(token, true), 'Content-Type': 'application/json' },
@@ -694,8 +678,8 @@ const mergePr = createStep({
     });
     await throwIfNotOk(res);
     const data = await res.json();
-    const out = { number: inputData.number, url: inputData.url, merged: !!data.merged, sha: data.sha, message: data.message };
-    try { console.log('[v2/merge-pr] out', { runId: inputData.runId, ...out }); } catch {}
+    const out = { number: inputData.number, url: (inputData as any).url, merged: !!data.merged, sha: data.sha, message: data.message };
+    try { console.log('[samba/merge-pr] out', { runId: (inputData as any).runId, ...out }); } catch {}
     return out;
   },
 });
@@ -715,16 +699,16 @@ const initFreestyle = createStep({
     let url: string | undefined;
     try {
       url = await initFreestyleSandbox();
-      try { console.log('[v2/init-freestyle] sandbox_url', { runId: (inputData as any).runId, url }); } catch {}
+      try { console.log('[samba/init-freestyle] sandbox_url', { runId: (inputData as any).runId, url }); } catch {}
     } catch (err) {
-      try { console.error('[v2/init-freestyle] failed', String(err)); } catch {}
+      try { console.error('[samba/init-freestyle] failed', String(err)); } catch {}
     }
     return { runId: (inputData as any).runId, prNumber: inputData.number, merged: (inputData as any).merged === true, freestyleUrl: url };
   },
 });
 
-export const fixFromStacktraceWorkflowV2 = createWorkflow({
-  id: 'fix-from-stacktrace-v2',
+export const sambaWorkflow = createWorkflow({
+  id: 'samba-workflow',
   inputSchema: prepareInput.inputSchema,
   outputSchema: initFreestyle.outputSchema,
 })
@@ -739,12 +723,12 @@ export const fixFromStacktraceWorkflowV2 = createWorkflow({
   .then(mergePr)
   .then(initFreestyle);
 
-fixFromStacktraceWorkflowV2.commit();
+sambaWorkflow.commit();
 
 // Simple programmatic runner for environments where .start is not wired
-export async function startFixFromStacktraceV2(input: z.infer<typeof prepareInput.inputSchema>) {
+export async function startSambaWorkflow(input: z.infer<typeof prepareInput.inputSchema>) {
   const runId = generateRunId();
-  console.log('[v2] manual-run begin', { runId });
+  console.log('[samba] manual-run begin', { runId });
   try {
     const prep = await (prepareInput as any).execute({ inputData: input });
     const p = await (parseInput as any).execute({ inputData: prep });
@@ -757,10 +741,12 @@ export async function startFixFromStacktraceV2(input: z.infer<typeof prepareInpu
     const pr = await (openPr as any).execute({ inputData: cm });
     const mg = await (mergePr as any).execute({ inputData: pr });
     const fs = await (initFreestyle as any).execute({ inputData: mg });
-    console.log('[v2] manual-run done', { runId, pr: { number: pr.number, url: pr.url }, merged: mg?.merged, freestyleUrl: fs?.freestyleUrl });
+    console.log('[samba] manual-run done', { runId, pr: { number: pr.number, url: pr.url }, merged: (mg as any)?.merged, freestyleUrl: (fs as any)?.freestyleUrl });
     return fs;
   } catch (err) {
-    console.error('[v2] manual-run error', { runId, err: String(err) });
+    console.error('[samba] manual-run error', { runId, err: String(err) });
     throw err;
   }
 }
+
+

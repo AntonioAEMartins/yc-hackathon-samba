@@ -4,11 +4,7 @@ import { Mastra } from '@mastra/core/mastra';
 import { registerApiRoute } from '@mastra/core/server';
 import { PinoLogger } from '@mastra/loggers';
 import { LibSQLStore } from '@mastra/libsql';
-import { fixFromStacktraceWorkflowV2, startFixFromStacktraceV2 } from './workflows/fix-from-stacktrace-workflow-v2.js';
-import { githubAgent } from './agents/github-agent.js';
-import { discoveryAgent } from './agents/discovery-agent.js';
-import { executionAgent } from './agents/execution-agent.js';
-import { finalizeAgent } from './agents/finalize-agent.js';
+import { sambaWorkflow, startSambaWorkflow } from './workflows/samba-workflow.js';
 import { createHmac } from 'node:crypto';
 
 function verifySignature(rawPayload: string, signatureHeader: string | undefined, secret: string | undefined): boolean {
@@ -25,8 +21,8 @@ function verifySignature(rawPayload: string, signatureHeader: string | undefined
 }
 
 export const mastra = new Mastra({
-  workflows: { fixFromStacktraceWorkflowV2 },
-  agents: { githubAgent, discoveryAgent, executionAgent, finalizeAgent },
+  workflows: { sambaWorkflow },
+  agents: {},
   storage: new LibSQLStore({
     // stores telemetry, evals, ... into memory storage, if it needs to persist, change to file:../mastra.db
     url: ":memory:",
@@ -65,7 +61,7 @@ export const mastra = new Mastra({
             return c.json({ status: 'invalid signature' }, 400);
           }
 
-          // Kick off fix-from-stacktrace-v2 if this is a Sentry event_alert
+          // Kick off samba-workflow if this is a Sentry event_alert
           try {
             const p = payload as any;
             try {
@@ -164,23 +160,23 @@ export const mastra = new Mastra({
               const input = { prompt, owner, repo, prTitle, token } as any;
 
               // Start run and log details
-              console.log('[fix-from-stacktrace-v2] starting', { owner, repo, filePath, promptSize: prompt.length });
+              console.log('[samba-workflow] starting', { owner, repo, filePath, promptSize: prompt.length });
               try {
                 // Prefer native start; if unavailable, run manual runner
-                const wfObj = (fixFromStacktraceWorkflowV2 as any);
+                const wfObj = (sambaWorkflow as any);
                 const directStart = wfObj?.start;
-                console.log('[fix-from-stacktrace-v2] directStart available?', !!directStart);
+                console.log('[samba-workflow] directStart available?', !!directStart);
                 if (typeof directStart === 'function') {
                   const run = await directStart({ inputData: input });
-                  console.log('[fix-from-stacktrace-v2] started', { runId: run?.id });
-                  return c.json({ status: 'ok', started: true, workflow: 'v2', runId: run?.id }, 202);
+                  console.log('[samba-workflow] started', { runId: run?.id });
+                  return c.json({ status: 'ok', started: true, workflow: 'samba-workflow', runId: run?.id }, 202);
                 }
 
-                console.log('[fix-from-stacktrace-v2] falling back to manual runner');
-                const pr = await startFixFromStacktraceV2(input);
-                return c.json({ status: 'ok', started: true, workflow: 'v2', pr }, 202);
+                console.log('[samba-workflow] falling back to manual runner');
+                const pr = await startSambaWorkflow(input);
+                return c.json({ status: 'ok', started: true, workflow: 'samba-workflow', pr }, 202);
               } catch (errStart) {
-                console.error('[fix-from-stacktrace-v2] failed_to_start', String(errStart));
+                console.error('[samba-workflow] failed_to_start', String(errStart));
                 return c.json({ status: 'ok', started: false, error: 'failed_to_start' }, 200);
               }
             }
