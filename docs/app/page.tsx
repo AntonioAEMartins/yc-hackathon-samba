@@ -16,7 +16,7 @@ import {
   TrendingDown,
   Activity,
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 
 // Mock notifications data
@@ -81,15 +81,15 @@ export default function SambaLandingPage() {
   const [visibleNotifications, setVisibleNotifications] = useState<
     Array<(typeof mockNotifications)[0] & { uniqueId: string }>
   >([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const indexRef = useRef(0);
 
   useEffect(() => {
-    const interval = setInterval(() => {
+    const pushNextNotification = () => {
+      const base =
+        mockNotifications[indexRef.current % mockNotifications.length];
       const nextNotification = {
-        ...mockNotifications[currentIndex % mockNotifications.length],
-        uniqueId: `${
-          mockNotifications[currentIndex % mockNotifications.length].id
-        }-${Date.now()}`,
+        ...base,
+        uniqueId: `${base.id}-${Date.now()}`,
       };
 
       setVisibleNotifications((prev) => {
@@ -97,11 +97,15 @@ export default function SambaLandingPage() {
         return newNotifications;
       });
 
-      setCurrentIndex((prev) => prev + 1);
-    }, 4000); // New notification every 4 seconds
+      indexRef.current += 1;
+    };
 
+    // Seed the first alert immediately on mount
+    pushNextNotification();
+
+    const interval = setInterval(pushNextNotification, 2000); // New notification every 2 seconds
     return () => clearInterval(interval);
-  }, [currentIndex]);
+  }, []);
 
   const getColorClasses = (color: string) => {
     const colorMap = {
@@ -471,7 +475,7 @@ export default function SambaLandingPage() {
             </h2>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-2 gap-6">
             <Card className="hover:shadow-lg hover:scale-105 transition-all duration-300 cursor-pointer border-gray-200 hover:border-deep-teal/20">
               <CardContent className="p-6">
                 <Zap className="w-8 h-8 text-copper mb-4 transition-colors" />

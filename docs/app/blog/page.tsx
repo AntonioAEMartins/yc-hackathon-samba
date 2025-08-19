@@ -22,7 +22,7 @@ export default function BlogPost() {
           <div className="flex items-center gap-4 text-sm text-gray-600 mb-6">
             <div className="flex items-center gap-1">
               <Calendar className="w-4 h-4" />
-              <span>January 15, 2025</span>
+              <span>August 11, 2025</span>
             </div>
             <div className="flex items-center gap-1">
               <Clock className="w-4 h-4" />
@@ -42,24 +42,42 @@ export default function BlogPost() {
           <div className="flex items-center gap-6 mb-8">
             <div className="flex items-center gap-3">
               <img
-                src="/placeholder.svg?height=48&width=48"
+                src="/antonio.jpg"
                 alt="Antonio Martins"
                 className="w-12 h-12 rounded-full object-cover"
               />
               <div>
                 <div className="font-semibold text-charcoal">Antonio Martins</div>
-                <div className="text-sm text-gray-600">Co-creator</div>
+                <div className="text-sm text-gray-600">
+                  <Link
+                    href="https://twitter.com/theTonMartins"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:underline"
+                  >
+                    @theTonMartins
+                  </Link>
+                </div>
               </div>
             </div>
             <div className="flex items-center gap-3">
               <img
-                src="/placeholder.svg?height=48&width=48"
+                src="/pedro.jpg"
                 alt="Pedro Stanzani"
                 className="w-12 h-12 rounded-full object-cover"
               />
               <div>
                 <div className="font-semibold text-charcoal">Pedro Stanzani</div>
-                <div className="text-sm text-gray-600">Co-creator</div>
+                <div className="text-sm text-gray-600">
+                  <Link
+                    href="https://twitter.com/pedrostanzani"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:underline"
+                  >
+                    @pedrostanzani
+                  </Link>
+                </div>
               </div>
             </div>
           </div>
@@ -128,27 +146,6 @@ export default function BlogPost() {
               suggestions, and rollback instructions. The PR includes context about the original error and the reasoning
               behind the fix.
             </p>
-
-            <h2 className="text-2xl font-bold text-charcoal mt-12 mb-6">Results & Impact</h2>
-
-            <p className="text-gray-700 leading-relaxed mb-6">
-              During our hackathon testing, Samba achieved remarkable results:
-            </p>
-
-            <ul className="list-disc list-inside space-y-2 text-gray-700 mb-6">
-              <li>
-                <strong>3.2 minute average response time</strong> from error detection to PR creation
-              </li>
-              <li>
-                <strong>87% fix accuracy rate</strong> for common JavaScript and TypeScript errors
-              </li>
-              <li>
-                <strong>Zero false positives</strong> in critical error handling
-              </li>
-              <li>
-                <strong>24/7 autonomous operation</strong> without human intervention
-              </li>
-            </ul>
 
             <h2 className="text-2xl font-bold text-charcoal mt-12 mb-6">The Future of Autonomous Development</h2>
 
