@@ -6,6 +6,10 @@ import { PinoLogger } from '@mastra/loggers';
 import { LibSQLStore } from '@mastra/libsql';
 import { sambaWorkflow, startSambaWorkflow } from './workflows/samba-workflow.js';
 import { createHmac } from 'node:crypto';
+import { testDiscoveryWorkflow } from './workflows/test/test-discovery-workflow.js';
+import { testProposeFixWorkflow } from './workflows/test/test-propose-fix-workflow.js';
+import { testDeploymentWorkflow } from './workflows/test/test-deployment-workflow.js';
+import { githubAgent } from './agents/github-agent.js';
 
 function verifySignature(rawPayload: string, signatureHeader: string | undefined, secret: string | undefined): boolean {
   if (!secret || secret.length === 0) return true;
@@ -21,8 +25,8 @@ function verifySignature(rawPayload: string, signatureHeader: string | undefined
 }
 
 export const mastra = new Mastra({
-  workflows: { sambaWorkflow },
-  agents: {},
+  workflows: { sambaWorkflow, testDiscoveryWorkflow, testProposeFixWorkflow, testDeploymentWorkflow },
+  agents: { githubAgent },
   storage: new LibSQLStore({
     // stores telemetry, evals, ... into memory storage, if it needs to persist, change to file:../mastra.db
     url: ":memory:",

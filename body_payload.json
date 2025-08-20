@@ -1,0 +1,1512 @@
+{
+  "action": "created",
+  "installation": { "uuid": "b8e89c0d-3416-4274-b9dd-1bf96556eadd" },
+  "data": {
+    "error": {
+      "event_id": "3f5c1540dbaf41f6aa0db0c2cd9e7613",
+      "project": 4509869062422528,
+      "release": "b8dce913b03c455a816f0335feffc60274ebd2b5",
+      "dist": null,
+      "platform": "node",
+      "message": "",
+      "datetime": "2025-08-19T15:43:05.011000+00:00",
+      "tags": [
+        ["browser", "Chrome 139"],
+        ["browser.name", "Chrome"],
+        ["client_os", "macOS"],
+        ["client_os.name", "macOS"],
+        ["environment", "development"],
+        ["handled", "yes"],
+        ["level", "error"],
+        ["mechanism", "generic"],
+        ["method", "POST"],
+        ["os", "macOS 15.1"],
+        ["os.name", "macOS"],
+        ["route", "/api/friends"],
+        ["runtime", "node v22.12.0"],
+        ["runtime.name", "node"],
+        ["release", "b8dce913b03c455a816f0335feffc60274ebd2b5"],
+        ["server_name", "Pedros-MacBook-Pro.local"],
+        ["transaction", "POST /api/[[...route]]"],
+        ["url", "http://localhost:3000/api/friends"]
+      ],
+      "_dsc": {
+        "environment": "development",
+        "org_id": "4509868690440192",
+        "public_key": "e3cdcf0b9e3ee6ac3065797b9d88ffa7",
+        "release": "b8dce913b03c455a816f0335feffc60274ebd2b5",
+        "replay_id": null,
+        "sample_rand": "0.4544651018823249",
+        "sample_rate": "1.0",
+        "sampled": true,
+        "trace_id": "f90c926c150c54126649671484ffc7ef",
+        "transaction": "GET /"
+      },
+      "_meta": {
+        "request": {
+          "headers": {
+            "3": {
+              "1": {
+                "": {
+                  "rem": [
+                    ["@creditcard:filter", "s", 201, 211],
+                    ["@creditcard:filter", "s", 282, 292]
+                  ],
+                  "len": 325
+                }
+              }
+            }
+          }
+        }
+      },
+      "_metrics": {
+        "bytes.ingested.event": 25453,
+        "bytes.stored.event": 58230
+      },
+      "_ref": 4509869062422528,
+      "_ref_version": 2,
+      "breadcrumbs": {
+        "values": [
+          {
+            "timestamp": 1755584523.546,
+            "type": "http",
+            "category": "http",
+            "level": "info",
+            "data": {
+              "http.method": "POST",
+              "status_code": 204,
+              "url": "https://telemetry.nextjs.org/api/v1/record"
+            }
+          },
+          {
+            "timestamp": 1755584523.548,
+            "type": "default",
+            "category": "console",
+            "level": "info",
+            "message": " \u001b[32m\u001b[1m✓\u001b[22m\u001b[39m Ready in 3.1s",
+            "data": {
+              "arguments": [
+                " \u001b[32m\u001b[1m✓\u001b[22m\u001b[39m Ready in 3.1s"
+              ],
+              "logger": "console"
+            }
+          }
+        ]
+      },
+      "contexts": {
+        "app": {
+          "app_start_time": "2025-08-19T06:22:00.168Z",
+          "app_memory": 203276288,
+          "free_memory": 96763904,
+          "type": "app"
+        },
+        "browser": {
+          "browser": "Chrome 139",
+          "name": "Chrome",
+          "version": "139",
+          "type": "browser"
+        },
+        "client_os": { "os": "macOS", "name": "macOS", "type": "os" },
+        "cloud_resource": { "type": "cloud_resource" },
+        "culture": {
+          "locale": "en-US",
+          "timezone": "America/Los_Angeles",
+          "type": "culture"
+        },
+        "device": {
+          "arch": "arm64",
+          "memory_size": 8589934592,
+          "free_memory": 96763904,
+          "boot_time": "2025-08-18T18:06:23.739Z",
+          "processor_count": 8,
+          "cpu_description": "Apple M1",
+          "processor_frequency": 2400,
+          "type": "device"
+        },
+        "os": {
+          "os": "macOS 15.1",
+          "name": "macOS",
+          "version": "15.1",
+          "build": "24B83",
+          "kernel_version": "24.1.0",
+          "type": "os"
+        },
+        "request": {
+          "query": {},
+          "type": "request",
+          "url": "http://localhost:3000/api/friends"
+        },
+        "runtime": {
+          "runtime": "node v22.12.0",
+          "name": "node",
+          "version": "v22.12.0",
+          "type": "runtime"
+        },
+        "trace": {
+          "trace_id": "f90c926c150c54126649671484ffc7ef",
+          "span_id": "3559bef6696e9b52",
+          "parent_span_id": "1d0dee334e4e4176",
+          "status": "unknown",
+          "client_sample_rate": 1,
+          "type": "trace"
+        }
+      },
+      "culprit": "POST /api/[[...route]]",
+      "environment": "development",
+      "exception": {
+        "values": [
+          {
+            "type": "Error",
+            "value": "Demo: CreateFriend crash",
+            "stacktrace": {
+              "frames": [
+                {
+                  "function": "Server.requestListener",
+                  "module": "next.dist.server.lib:start-server",
+                  "filename": "/Users/pedro/Desktop/social/node_modules/next/dist/server/lib/start-server.js",
+                  "abs_path": "/Users/pedro/Desktop/social/node_modules/next/dist/server/lib/start-server.js",
+                  "lineno": 158,
+                  "colno": 13,
+                  "pre_context": [
+                    "    }",
+                    "    async function requestListener(req, res) {",
+                    "        try {",
+                    "            if (handlersPromise) {",
+                    "                await handlersPromise;",
+                    "                handlersPromise = undefined;",
+                    "            }"
+                  ],
+                  "context_line": "            await requestHandler(req, res);",
+                  "post_context": [
+                    "        } catch (err) {",
+                    "            res.statusCode = 500;",
+                    "            res.end('Internal Server Error');",
+                    "            _log.error(`Failed to handle request for ${req.url}`);",
+                    "            console.error(err);",
+                    "        } finally{",
+                    "            if (isDev) {"
+                  ],
+                  "in_app": false,
+                  "data": { "client_in_app": false, "symbolicated": false }
+                },
+                {
+                  "function": "requestHandlerImpl",
+                  "module": "next.dist.server.lib:router-server",
+                  "filename": "/Users/pedro/Desktop/social/node_modules/next/dist/server/lib/router-server.js",
+                  "abs_path": "/Users/pedro/Desktop/social/node_modules/next/dist/server/lib/router-server.js",
+                  "lineno": 452,
+                  "colno": 13,
+                  "pre_context": [
+                    "                });",
+                    "            }",
+                    "            await invokeRender(parsedUrl, '/404', handleIndex, {",
+                    "                invokeStatus: 404",
+                    "            });",
+                    "        };",
+                    "        try {"
+                  ],
+                  "context_line": "            await handleRequest(0);",
+                  "post_context": [
+                    "        } catch (err) {",
+                    "            try {",
+                    "                let invokePath = '/500';",
+                    "                let invokeStatus = '500';",
+                    "                if (err instanceof _utils.DecodeError) {",
+                    "                    invokePath = '/400';",
+                    "                    invokeStatus = '400';"
+                  ],
+                  "in_app": false,
+                  "data": { "client_in_app": false, "symbolicated": false }
+                },
+                {
+                  "function": "handleRequest",
+                  "module": "next.dist.server.lib:router-server",
+                  "filename": "/Users/pedro/Desktop/social/node_modules/next/dist/server/lib/router-server.js",
+                  "abs_path": "/Users/pedro/Desktop/social/node_modules/next/dist/server/lib/router-server.js",
+                  "lineno": 428,
+                  "colno": 24,
+                  "pre_context": [
+                    "                        });",
+                    "                    }",
+                    "                    throw err;",
+                    "                }",
+                    "            }",
+                    "            if (matchedOutput) {",
+                    "                invokedOutputs.add(matchedOutput.itemPath);"
+                  ],
+                  "context_line": "                return await invokeRender(parsedUrl, parsedUrl.pathname || '/', handleIndex, {",
+                  "post_context": [
+                    "                    invokeOutput: matchedOutput.itemPath",
+                    "                });",
+                    "            }",
+                    "            // 404 case",
+                    "            res.setHeader('Cache-Control', 'private, no-cache, no-store, max-age=0, must-revalidate');",
+                    "            // Short-circuit favicon.ico serving so that the 404 page doesn't get built as favicon is requested by the browser when loading any route.",
+                    "            if (opts.dev && !matchedOutput && parsedUrl.pathname === '/favicon.ico') {"
+                  ],
+                  "in_app": false,
+                  "data": { "client_in_app": false, "symbolicated": false }
+                },
+                {
+                  "function": "invokeRender",
+                  "module": "next.dist.server.lib:router-server",
+                  "filename": "/Users/pedro/Desktop/social/node_modules/next/dist/server/lib/router-server.js",
+                  "abs_path": "/Users/pedro/Desktop/social/node_modules/next/dist/server/lib/router-server.js",
+                  "lineno": 237,
+                  "colno": 21,
+                  "pre_context": [
+                    "                (0, _requestmeta.addRequestMeta)(req, key, additionalRequestMeta[key]);",
+                    "            }",
+                    "            debug('invokeRender', req.url, req.headers);",
+                    "            try {",
+                    "                var _renderServer_instance;",
+                    "                const initResult = await (renderServer == null ? void 0 : (_renderServer_instance = renderServer.instance) == null ? void 0  {snip}",
+                    "                try {"
+                  ],
+                  "context_line": "                    await (initResult == null ? void 0 : initResult.requestHandler(req, res));",
+                  "post_context": [
+                    "                } catch (err) {",
+                    "                    if (err instanceof _baseserver.NoFallbackError) {",
+                    "                        // eslint-disable-next-line",
+                    "                        await handleRequest(handleIndex + 1);",
+                    "                        return;",
+                    "                    }",
+                    "                    throw err;"
+                  ],
+                  "in_app": false,
+                  "data": { "client_in_app": false, "symbolicated": false }
+                },
+                {
+                  "function": "DevServer.handleRequest",
+                  "module": "next.dist.server.dev:next-dev-server",
+                  "filename": "/Users/pedro/Desktop/social/node_modules/next/dist/server/dev/next-dev-server.js",
+                  "abs_path": "/Users/pedro/Desktop/social/node_modules/next/dist/server/dev/next-dev-server.js",
+                  "lineno": 368,
+                  "colno": 24,
+                  "pre_context": [
+                    "            return handler(request, response, parsedUrl);",
+                    "        };",
+                    "    }",
+                    "    async handleRequest(req, res, parsedUrl) {",
+                    "        const span = (0, _trace.trace)('handle-request', undefined, {",
+                    "            url: req.url",
+                    "        });"
+                  ],
+                  "context_line": "        const result = await span.traceAsyncFn(async ()=>{",
+                  "post_context": [
+                    "            var _this_ready;",
+                    "            await ((_this_ready = this.ready) == null ? void 0 : _this_ready.promise);",
+                    "            return await super.handleRequest(req, res, parsedUrl);",
+                    "        });",
+                    "        const memoryUsage = process.memoryUsage();",
+                    "        span.traceChild('memory-usage', {",
+                    "            url: req.url,"
+                  ],
+                  "in_app": false,
+                  "data": { "client_in_app": false, "symbolicated": false }
+                },
+                {
+                  "function": "Span.traceAsyncFn",
+                  "module": "next.dist.trace:trace",
+                  "filename": "/Users/pedro/Desktop/social/node_modules/next/dist/trace/trace.js",
+                  "abs_path": "/Users/pedro/Desktop/social/node_modules/next/dist/trace/trace.js",
+                  "lineno": 157,
+                  "colno": 20,
+                  "pre_context": [
+                    "            return fn(this);",
+                    "        } finally{",
+                    "            this.stop();",
+                    "        }",
+                    "    }",
+                    "    async traceAsyncFn(fn) {",
+                    "        try {"
+                  ],
+                  "context_line": "            return await fn(this);",
+                  "post_context": [
+                    "        } finally{",
+                    "            this.stop();",
+                    "        }",
+                    "    }",
+                    "}",
+                    "const trace = (name, parentId, attrs)=>{",
+                    "    return new Span({"
+                  ],
+                  "in_app": false,
+                  "data": { "client_in_app": false, "symbolicated": false }
+                },
+                {
+                  "module": "next.dist.server.dev:next-dev-server",
+                  "filename": "/Users/pedro/Desktop/social/node_modules/next/dist/server/dev/next-dev-server.js",
+                  "abs_path": "/Users/pedro/Desktop/social/node_modules/next/dist/server/dev/next-dev-server.js",
+                  "lineno": 371,
+                  "colno": 20,
+                  "pre_context": [
+                    "    async handleRequest(req, res, parsedUrl) {",
+                    "        const span = (0, _trace.trace)('handle-request', undefined, {",
+                    "            url: req.url",
+                    "        });",
+                    "        const result = await span.traceAsyncFn(async ()=>{",
+                    "            var _this_ready;",
+                    "            await ((_this_ready = this.ready) == null ? void 0 : _this_ready.promise);"
+                  ],
+                  "context_line": "            return await super.handleRequest(req, res, parsedUrl);",
+                  "post_context": [
+                    "        });",
+                    "        const memoryUsage = process.memoryUsage();",
+                    "        span.traceChild('memory-usage', {",
+                    "            url: req.url,",
+                    "            'memory.rss': String(memoryUsage.rss),",
+                    "            'memory.heapUsed': String(memoryUsage.heapUsed),",
+                    "            'memory.heapTotal': String(memoryUsage.heapTotal)"
+                  ],
+                  "in_app": false,
+                  "data": { "client_in_app": false, "symbolicated": false }
+                },
+                {
+                  "function": "DevServer.handleRequestImpl",
+                  "module": "next.dist.server:base-server",
+                  "filename": "/Users/pedro/Desktop/social/node_modules/next/dist/server/base-server.js",
+                  "abs_path": "/Users/pedro/Desktop/social/node_modules/next/dist/server/base-server.js",
+                  "lineno": 900,
+                  "colno": 17,
+                  "pre_context": [
+                    "                }",
+                    "                const invokeQuery = (0, _requestmeta.getRequestMeta)(req, 'invokeQuery');",
+                    "                if (invokeQuery) {",
+                    "                    Object.assign(parsedUrl.query, invokeQuery);",
+                    "                }",
+                    "                finished = await this.normalizeAndAttachMetadata(req, res, parsedUrl);",
+                    "                if (finished) return;"
+                  ],
+                  "context_line": "                await this.handleCatchallRenderRequest(req, res, parsedUrl);",
+                  "post_context": [
+                    "                return;",
+                    "            }",
+                    "            if (process.env.NEXT_RUNTIME !== 'edge' && (0, _requestmeta.getRequestMeta)(req, 'middlewareInvoke')) {",
+                    "                finished = await this.normalizeAndAttachMetadata(req, res, parsedUrl);",
+                    "                if (finished) return;",
+                    "                finished = await this.handleCatchallMiddlewareRequest(req, res, parsedUrl);",
+                    "                if (finished) return;"
+                  ],
+                  "in_app": false,
+                  "data": { "client_in_app": false, "symbolicated": false }
+                },
+                {
+                  "function": "NextNodeServer.handleCatchallRenderRequest",
+                  "module": "next.dist.server:next-server",
+                  "filename": "/Users/pedro/Desktop/social/node_modules/next/dist/server/next-server.js",
+                  "abs_path": "/Users/pedro/Desktop/social/node_modules/next/dist/server/next-server.js",
+                  "lineno": 305,
+                  "colno": 17,
+                  "pre_context": [
+                    "                    if (this.nextConfig.output === 'export') {",
+                    "                        await this.render404(req, res, parsedUrl);",
+                    "                        return true;",
+                    "                    }",
+                    "                    const handled = await this.handleApiRequest(req, res, query, match);",
+                    "                    if (handled) return true;",
+                    "                }"
+                  ],
+                  "context_line": "                await this.render(req, res, pathname, query, parsedUrl, true);",
+                  "post_context": [
+                    "                return true;",
+                    "            } catch (err) {",
+                    "                if (err instanceof _baseserver.NoFallbackError) {",
+                    "                    throw err;",
+                    "                }",
+                    "                try {",
+                    "                    if (this.renderOpts.dev) {"
+                  ],
+                  "in_app": false,
+                  "data": { "client_in_app": false, "symbolicated": false }
+                },
+                {
+                  "function": "DevServer.pipeImpl",
+                  "module": "next.dist.server:base-server",
+                  "filename": "/Users/pedro/Desktop/social/node_modules/next/dist/server/base-server.js",
+                  "abs_path": "/Users/pedro/Desktop/social/node_modules/next/dist/server/base-server.js",
+                  "lineno": 1008,
+                  "colno": 25,
+                  "pre_context": [
+                    "            renderOpts: {",
+                    "                ...this.renderOpts,",
+                    "                supportsDynamicResponse: !isBotRequest,",
+                    "                botType: (0, _isbot.getBotType)(ua),",
+                    "                serveStreamingMetadata: (0, _streamingmetadata.shouldServeStreamingMetadata)(ua, this.nextConfig.htmlLimitedBots)",
+                    "            }",
+                    "        };"
+                  ],
+                  "context_line": "        const payload = await fn(ctx);",
+                  "post_context": [
+                    "        if (payload === null) {",
+                    "            return;",
+                    "        }",
+                    "        const { req, res } = ctx;",
+                    "        const originalStatus = res.statusCode;",
+                    "        const { body, type } = payload;",
+                    "        let { cacheControl } = payload;"
+                  ],
+                  "in_app": false,
+                  "data": { "client_in_app": false, "symbolicated": false }
+                },
+                {
+                  "function": "DevServer.renderToResponseImpl",
+                  "module": "next.dist.server:base-server",
+                  "filename": "/Users/pedro/Desktop/social/node_modules/next/dist/server/base-server.js",
+                  "abs_path": "/Users/pedro/Desktop/social/node_modules/next/dist/server/base-server.js",
+                  "lineno": 2445,
+                  "colno": 32,
+                  "pre_context": [
+                    "            for await (const match of this.matchers.matchAll(pathname, options)){",
+                    "                // when a specific invoke-output is meant to be matched",
+                    "                // ensure a prior dynamic route/page doesn't take priority",
+                    "                const invokeOutput = (0, _requestmeta.getRequestMeta)(ctx.req, 'invokeOutput');",
+                    "                if (!this.minimalMode && typeof invokeOutput === 'string' && (0, _utils1.isDynamicRoute)(invokeOutput || '') && invokeOutput {snip}",
+                    "                    continue;",
+                    "                }"
+                  ],
+                  "context_line": "                const result = await this.renderPageComponent({",
+                  "post_context": [
+                    "                    ...ctx,",
+                    "                    pathname: match.definition.pathname,",
+                    "                    renderOpts: {",
+                    "                        ...ctx.renderOpts,",
+                    "                        params: match.params",
+                    "                    }",
+                    "                }, bubbleNoFallback);"
+                  ],
+                  "in_app": false,
+                  "data": { "client_in_app": false, "symbolicated": false }
+                },
+                {
+                  "function": "DevServer.renderPageComponent",
+                  "module": "next.dist.server:base-server",
+                  "filename": "/Users/pedro/Desktop/social/node_modules/next/dist/server/base-server.js",
+                  "abs_path": "/Users/pedro/Desktop/social/node_modules/next/dist/server/base-server.js",
+                  "lineno": 2408,
+                  "colno": 24,
+                  "pre_context": [
+                    "            appPaths,",
+                    "            // Ensuring for loading page component routes is done via the matcher.",
+                    "            shouldEnsure: false",
+                    "        });",
+                    "        if (result) {",
+                    "            (0, _tracer.getTracer)().setRootSpanAttribute('next.route', pathname);",
+                    "            try {"
+                  ],
+                  "context_line": "                return await this.renderToResponseWithComponents(ctx, result);",
+                  "post_context": [
+                    "            } catch (err) {",
+                    "                const isNoFallbackError = err instanceof NoFallbackError;",
+                    "                if (!isNoFallbackError || isNoFallbackError && bubbleNoFallback) {",
+                    "                    throw err;",
+                    "                }",
+                    "            }",
+                    "        }"
+                  ],
+                  "in_app": false,
+                  "data": { "client_in_app": false, "symbolicated": false }
+                },
+                {
+                  "function": "DevServer.renderToResponseWithComponentsImpl",
+                  "module": "next.dist.server:base-server",
+                  "filename": "/Users/pedro/Desktop/social/node_modules/next/dist/server/base-server.js",
+                  "abs_path": "/Users/pedro/Desktop/social/node_modules/next/dist/server/base-server.js",
+                  "lineno": 1920,
+                  "colno": 28,
+                  "pre_context": [
+                    "            // Perform the render.",
+                    "            return doRender({",
+                    "                postponed,",
+                    "                pagesFallback: undefined,",
+                    "                fallbackRouteParams",
+                    "            });",
+                    "        };"
+                  ],
+                  "context_line": "        const cacheEntry = await this.responseCache.get(ssgCacheKey, responseGenerator, {",
+                  "post_context": [
+                    "            routeKind: // If the route module is not defined, we can assume it's a page being",
+                    "            // rendered and thus check isAppPath.",
+                    "            (routeModule == null ? void 0 : routeModule.definition.kind) ?? (isAppPath ? _routekind.RouteKind.APP_PAGE : _routekind.RouteKind.PAGES),",
+                    "            incrementalCache,",
+                    "            isOnDemandRevalidate,",
+                    "            isPrefetch: req.headers.purpose === 'prefetch',",
+                    "            isRoutePPREnabled"
+                  ],
+                  "in_app": false,
+                  "data": { "client_in_app": false, "symbolicated": false }
+                },
+                {
+                  "function": "doRender",
+                  "module": "next.dist.server:base-server",
+                  "filename": "/Users/pedro/Desktop/social/node_modules/next/dist/server/base-server.js",
+                  "abs_path": "/Users/pedro/Desktop/social/node_modules/next/dist/server/base-server.js",
+                  "lineno": 1518,
+                  "colno": 42,
+                  "pre_context": [
+                    "                        },",
+                    "                        sharedContext: {",
+                    "                            buildId: this.buildId",
+                    "                        }",
+                    "                    };",
+                    "                    try {",
+                    "                        const request = _nextrequest.NextRequestAdapter.fromNodeNextRequest(req, (0, _nextrequest.signalFromNodeResponse)(re {snip}"
+                  ],
+                  "context_line": "                        const response = await routeModule.handle(request, context);",
+                  "post_context": [
+                    "                        req.fetchMetrics = context.renderOpts.fetchMetrics;",
+                    "                        const cacheTags = context.renderOpts.collectedTags;",
+                    "                        // If the request is for a static response, we can cache it so long",
+                    "                        // as it's not edge.",
+                    "                        if (isSSG) {",
+                    "                            const blob = await response.blob();",
+                    "                            // Copy the headers from the response."
+                  ],
+                  "in_app": false,
+                  "data": { "client_in_app": false, "symbolicated": false }
+                },
+                {
+                  "function": "async AppRouteRouteModule.handle",
+                  "module": "next.dist.compiled.next-server:app-route.runtime.dev",
+                  "filename": "next/dist/src/server/route-modules/app-route/module.ts",
+                  "abs_path": "next/dist/src/server/route-modules/app-route/module.ts",
+                  "lineno": 695,
+                  "colno": 31,
+                  "pre_context": [
+                    "     // support. We set this to `unknown` because the type is not known until",
+                    "     // runtime when we do a instanceof check below."
+                  ],
+                  "context_line": "     const response: unknown = await this.actionAsyncStorage.run(",
+                  "post_context": [
+                    "       actionStore,",
+                    "       () =>",
+                    "         this.workUnitAsyncStorage.run(requestStore, () =>"
+                  ],
+                  "in_app": false,
+                  "data": { "client_in_app": false }
+                },
+                {
+                  "function": "async AppRouteRouteModule.do",
+                  "module": "next.dist.compiled.next-server:app-route.runtime.dev",
+                  "filename": "next/dist/src/server/route-modules/app-route/module.ts",
+                  "abs_path": "next/dist/src/server/route-modules/app-route/module.ts",
+                  "lineno": 568,
+                  "colno": 15,
+                  "pre_context": ["         }", "       } else {"],
+                  "context_line": "         res = await workUnitAsyncStorage.run(",
+                  "post_context": [
+                    "           requestStore,",
+                    "           handler,",
+                    "           request,"
+                  ],
+                  "in_app": false,
+                  "data": { "client_in_app": false }
+                },
+                {
+                  "function": "async eval",
+                  "module": "@sentry.nextjs.build.cjs.common:wrapRouteHandlerWithSentry",
+                  "filename": "node_modules/@sentry/nextjs/build/cjs/common/wrapRouteHandlerWithSentry.js",
+                  "abs_path": "node_modules/@sentry/nextjs/build/cjs/common/wrapRouteHandlerWithSentry.js",
+                  "lineno": 59,
+                  "colno": 1,
+                  "pre_context": ["             }", ""],
+                  "context_line": "             const response = await core.handleCallbackErrors(",
+                  "post_context": [
+                    "               () => originalFunction.apply(thisArg, args),",
+                    "               error => {",
+                    "                 // Next.js throws errors when calling `redirect()`. We don't wanna report these."
+                  ],
+                  "in_app": false,
+                  "data": { "client_in_app": false }
+                },
+                {
+                  "function": "async eval",
+                  "module": "hono.dist:hono-base",
+                  "filename": "node_modules/hono/dist/hono-base.js",
+                  "abs_path": "node_modules/hono/dist/hono-base.js",
+                  "lineno": 201,
+                  "colno": 1,
+                  "pre_context": ["     return (async () => {", "       try {"],
+                  "context_line": "         const context = await composed(c);",
+                  "post_context": [
+                    "         if (!context.finalized) {",
+                    "           throw new Error(",
+                    "             \"Context is not finalized. Did you forget to return a Response object or `await next()`?\""
+                  ],
+                  "in_app": false,
+                  "data": { "client_in_app": false }
+                },
+                {
+                  "function": "async dispatch",
+                  "module": "hono.dist:compose",
+                  "filename": "node_modules/hono/dist/compose.js",
+                  "abs_path": "node_modules/hono/dist/compose.js",
+                  "lineno": 22,
+                  "colno": 1,
+                  "pre_context": ["       if (handler) {", "         try {"],
+                  "context_line": "           res = await handler(context, () => dispatch(i + 1));",
+                  "post_context": [
+                    "         } catch (err) {",
+                    "           if (err instanceof Error && onError) {",
+                    "             context.error = err;"
+                  ],
+                  "in_app": false,
+                  "data": { "client_in_app": false }
+                },
+                {
+                  "function": "process.processTicksAndRejections",
+                  "module": "task_queues",
+                  "filename": "node:internal/process/task_queues",
+                  "abs_path": "node:internal/process/task_queues",
+                  "lineno": 105,
+                  "colno": 5,
+                  "platform": "nodejs",
+                  "in_app": false,
+                  "data": { "client_in_app": false }
+                },
+                {
+                  "function": "eval",
+                  "module": "hono.dist.validator:validator",
+                  "filename": "node_modules/hono/dist/validator/validator.js",
+                  "abs_path": "node_modules/hono/dist/validator/validator.js",
+                  "lineno": 81,
+                  "colno": 1,
+                  "pre_context": [
+                    "     }",
+                    "     c.req.addValidatedData(target, res);"
+                  ],
+                  "context_line": "     await next();",
+                  "post_context": ["   };", " };", " export {"],
+                  "in_app": false,
+                  "data": { "client_in_app": false }
+                },
+                {
+                  "function": "eval",
+                  "module": "hono.dist:compose",
+                  "filename": "node_modules/hono/dist/compose.js",
+                  "abs_path": "node_modules/hono/dist/compose.js",
+                  "lineno": 22,
+                  "colno": 1,
+                  "pre_context": ["       if (handler) {", "         try {"],
+                  "context_line": "           res = await handler(context, () => dispatch(i + 1));",
+                  "post_context": [
+                    "         } catch (err) {",
+                    "           if (err instanceof Error && onError) {",
+                    "             context.error = err;"
+                  ],
+                  "in_app": false,
+                  "data": { "client_in_app": false }
+                },
+                {
+                  "function": "dispatch",
+                  "module": "hono.dist:compose",
+                  "filename": "node_modules/hono/dist/compose.js",
+                  "abs_path": "node_modules/hono/dist/compose.js",
+                  "lineno": 22,
+                  "colno": 1,
+                  "pre_context": ["       if (handler) {", "         try {"],
+                  "context_line": "           res = await handler(context, () => dispatch(i + 1));",
+                  "post_context": [
+                    "         } catch (err) {",
+                    "           if (err instanceof Error && onError) {",
+                    "             context.error = err;"
+                  ],
+                  "in_app": false,
+                  "data": { "client_in_app": false }
+                },
+                {
+                  "function": "eval",
+                  "module": "friends.router.ts",
+                  "filename": "src/server/modules/friends/friends.router.ts",
+                  "abs_path": "src/server/modules/friends/friends.router.ts",
+                  "lineno": 171,
+                  "colno": 13,
+                  "pre_context": [
+                    "     const body = ctx.req.valid(\"json\");",
+                    "     if (body.name?.toLowerCase().includes(\"crash\")) {"
+                  ],
+                  "context_line": "       throw new Error(\"Demo: CreateFriend crash\");",
+                  "post_context": [
+                    "     }",
+                    "     const friend = await prisma.friend.create({",
+                    "       data: {"
+                  ],
+                  "in_app": false,
+                  "data": { "client_in_app": false }
+                }
+              ]
+            },
+            "raw_stacktrace": {
+              "frames": [
+                {
+                  "function": "Server.requestListener",
+                  "module": "next.dist.server.lib:start-server",
+                  "filename": "/Users/pedro/Desktop/social/node_modules/next/dist/server/lib/start-server.js",
+                  "abs_path": "/Users/pedro/Desktop/social/node_modules/next/dist/server/lib/start-server.js",
+                  "lineno": 158,
+                  "colno": 13,
+                  "pre_context": [
+                    "    }",
+                    "    async function requestListener(req, res) {",
+                    "        try {",
+                    "            if (handlersPromise) {",
+                    "                await handlersPromise;",
+                    "                handlersPromise = undefined;",
+                    "            }"
+                  ],
+                  "context_line": "            await requestHandler(req, res);",
+                  "post_context": [
+                    "        } catch (err) {",
+                    "            res.statusCode = 500;",
+                    "            res.end('Internal Server Error');",
+                    "            _log.error(`Failed to handle request for ${req.url}`);",
+                    "            console.error(err);",
+                    "        } finally{",
+                    "            if (isDev) {"
+                  ],
+                  "in_app": false,
+                  "data": { "client_in_app": false }
+                },
+                {
+                  "function": "requestHandlerImpl",
+                  "module": "next.dist.server.lib:router-server",
+                  "filename": "/Users/pedro/Desktop/social/node_modules/next/dist/server/lib/router-server.js",
+                  "abs_path": "/Users/pedro/Desktop/social/node_modules/next/dist/server/lib/router-server.js",
+                  "lineno": 452,
+                  "colno": 13,
+                  "pre_context": [
+                    "                });",
+                    "            }",
+                    "            await invokeRender(parsedUrl, '/404', handleIndex, {",
+                    "                invokeStatus: 404",
+                    "            });",
+                    "        };",
+                    "        try {"
+                  ],
+                  "context_line": "            await handleRequest(0);",
+                  "post_context": [
+                    "        } catch (err) {",
+                    "            try {",
+                    "                let invokePath = '/500';",
+                    "                let invokeStatus = '500';",
+                    "                if (err instanceof _utils.DecodeError) {",
+                    "                    invokePath = '/400';",
+                    "                    invokeStatus = '400';"
+                  ],
+                  "in_app": false,
+                  "data": { "client_in_app": false }
+                },
+                {
+                  "function": "handleRequest",
+                  "module": "next.dist.server.lib:router-server",
+                  "filename": "/Users/pedro/Desktop/social/node_modules/next/dist/server/lib/router-server.js",
+                  "abs_path": "/Users/pedro/Desktop/social/node_modules/next/dist/server/lib/router-server.js",
+                  "lineno": 428,
+                  "colno": 24,
+                  "pre_context": [
+                    "                        });",
+                    "                    }",
+                    "                    throw err;",
+                    "                }",
+                    "            }",
+                    "            if (matchedOutput) {",
+                    "                invokedOutputs.add(matchedOutput.itemPath);"
+                  ],
+                  "context_line": "                return await invokeRender(parsedUrl, parsedUrl.pathname || '/', handleIndex, {",
+                  "post_context": [
+                    "                    invokeOutput: matchedOutput.itemPath",
+                    "                });",
+                    "            }",
+                    "            // 404 case",
+                    "            res.setHeader('Cache-Control', 'private, no-cache, no-store, max-age=0, must-revalidate');",
+                    "            // Short-circuit favicon.ico serving so that the 404 page doesn't get built as favicon is requested by the browser when loading any route.",
+                    "            if (opts.dev && !matchedOutput && parsedUrl.pathname === '/favicon.ico') {"
+                  ],
+                  "in_app": false,
+                  "data": { "client_in_app": false }
+                },
+                {
+                  "function": "invokeRender",
+                  "module": "next.dist.server.lib:router-server",
+                  "filename": "/Users/pedro/Desktop/social/node_modules/next/dist/server/lib/router-server.js",
+                  "abs_path": "/Users/pedro/Desktop/social/node_modules/next/dist/server/lib/router-server.js",
+                  "lineno": 237,
+                  "colno": 21,
+                  "pre_context": [
+                    "                (0, _requestmeta.addRequestMeta)(req, key, additionalRequestMeta[key]);",
+                    "            }",
+                    "            debug('invokeRender', req.url, req.headers);",
+                    "            try {",
+                    "                var _renderServer_instance;",
+                    "                const initResult = await (renderServer == null ? void 0 : (_renderServer_instance = renderServer.instance) == null ? void 0  {snip}",
+                    "                try {"
+                  ],
+                  "context_line": "                    await (initResult == null ? void 0 : initResult.requestHandler(req, res));",
+                  "post_context": [
+                    "                } catch (err) {",
+                    "                    if (err instanceof _baseserver.NoFallbackError) {",
+                    "                        // eslint-disable-next-line",
+                    "                        await handleRequest(handleIndex + 1);",
+                    "                        return;",
+                    "                    }",
+                    "                    throw err;"
+                  ],
+                  "in_app": false,
+                  "data": { "client_in_app": false }
+                },
+                {
+                  "function": "DevServer.handleRequest",
+                  "module": "next.dist.server.dev:next-dev-server",
+                  "filename": "/Users/pedro/Desktop/social/node_modules/next/dist/server/dev/next-dev-server.js",
+                  "abs_path": "/Users/pedro/Desktop/social/node_modules/next/dist/server/dev/next-dev-server.js",
+                  "lineno": 368,
+                  "colno": 24,
+                  "pre_context": [
+                    "            return handler(request, response, parsedUrl);",
+                    "        };",
+                    "    }",
+                    "    async handleRequest(req, res, parsedUrl) {",
+                    "        const span = (0, _trace.trace)('handle-request', undefined, {",
+                    "            url: req.url",
+                    "        });"
+                  ],
+                  "context_line": "        const result = await span.traceAsyncFn(async ()=>{",
+                  "post_context": [
+                    "            var _this_ready;",
+                    "            await ((_this_ready = this.ready) == null ? void 0 : _this_ready.promise);",
+                    "            return await super.handleRequest(req, res, parsedUrl);",
+                    "        });",
+                    "        const memoryUsage = process.memoryUsage();",
+                    "        span.traceChild('memory-usage', {",
+                    "            url: req.url,"
+                  ],
+                  "in_app": false,
+                  "data": { "client_in_app": false }
+                },
+                {
+                  "function": "Span.traceAsyncFn",
+                  "module": "next.dist.trace:trace",
+                  "filename": "/Users/pedro/Desktop/social/node_modules/next/dist/trace/trace.js",
+                  "abs_path": "/Users/pedro/Desktop/social/node_modules/next/dist/trace/trace.js",
+                  "lineno": 157,
+                  "colno": 20,
+                  "pre_context": [
+                    "            return fn(this);",
+                    "        } finally{",
+                    "            this.stop();",
+                    "        }",
+                    "    }",
+                    "    async traceAsyncFn(fn) {",
+                    "        try {"
+                  ],
+                  "context_line": "            return await fn(this);",
+                  "post_context": [
+                    "        } finally{",
+                    "            this.stop();",
+                    "        }",
+                    "    }",
+                    "}",
+                    "const trace = (name, parentId, attrs)=>{",
+                    "    return new Span({"
+                  ],
+                  "in_app": false,
+                  "data": { "client_in_app": false }
+                },
+                {
+                  "module": "next.dist.server.dev:next-dev-server",
+                  "filename": "/Users/pedro/Desktop/social/node_modules/next/dist/server/dev/next-dev-server.js",
+                  "abs_path": "/Users/pedro/Desktop/social/node_modules/next/dist/server/dev/next-dev-server.js",
+                  "lineno": 371,
+                  "colno": 20,
+                  "pre_context": [
+                    "    async handleRequest(req, res, parsedUrl) {",
+                    "        const span = (0, _trace.trace)('handle-request', undefined, {",
+                    "            url: req.url",
+                    "        });",
+                    "        const result = await span.traceAsyncFn(async ()=>{",
+                    "            var _this_ready;",
+                    "            await ((_this_ready = this.ready) == null ? void 0 : _this_ready.promise);"
+                  ],
+                  "context_line": "            return await super.handleRequest(req, res, parsedUrl);",
+                  "post_context": [
+                    "        });",
+                    "        const memoryUsage = process.memoryUsage();",
+                    "        span.traceChild('memory-usage', {",
+                    "            url: req.url,",
+                    "            'memory.rss': String(memoryUsage.rss),",
+                    "            'memory.heapUsed': String(memoryUsage.heapUsed),",
+                    "            'memory.heapTotal': String(memoryUsage.heapTotal)"
+                  ],
+                  "in_app": false,
+                  "data": { "client_in_app": false }
+                },
+                {
+                  "function": "DevServer.handleRequestImpl",
+                  "module": "next.dist.server:base-server",
+                  "filename": "/Users/pedro/Desktop/social/node_modules/next/dist/server/base-server.js",
+                  "abs_path": "/Users/pedro/Desktop/social/node_modules/next/dist/server/base-server.js",
+                  "lineno": 900,
+                  "colno": 17,
+                  "pre_context": [
+                    "                }",
+                    "                const invokeQuery = (0, _requestmeta.getRequestMeta)(req, 'invokeQuery');",
+                    "                if (invokeQuery) {",
+                    "                    Object.assign(parsedUrl.query, invokeQuery);",
+                    "                }",
+                    "                finished = await this.normalizeAndAttachMetadata(req, res, parsedUrl);",
+                    "                if (finished) return;"
+                  ],
+                  "context_line": "                await this.handleCatchallRenderRequest(req, res, parsedUrl);",
+                  "post_context": [
+                    "                return;",
+                    "            }",
+                    "            if (process.env.NEXT_RUNTIME !== 'edge' && (0, _requestmeta.getRequestMeta)(req, 'middlewareInvoke')) {",
+                    "                finished = await this.normalizeAndAttachMetadata(req, res, parsedUrl);",
+                    "                if (finished) return;",
+                    "                finished = await this.handleCatchallMiddlewareRequest(req, res, parsedUrl);",
+                    "                if (finished) return;"
+                  ],
+                  "in_app": false,
+                  "data": { "client_in_app": false }
+                },
+                {
+                  "function": "NextNodeServer.handleCatchallRenderRequest",
+                  "module": "next.dist.server:next-server",
+                  "filename": "/Users/pedro/Desktop/social/node_modules/next/dist/server/next-server.js",
+                  "abs_path": "/Users/pedro/Desktop/social/node_modules/next/dist/server/next-server.js",
+                  "lineno": 305,
+                  "colno": 17,
+                  "pre_context": [
+                    "                    if (this.nextConfig.output === 'export') {",
+                    "                        await this.render404(req, res, parsedUrl);",
+                    "                        return true;",
+                    "                    }",
+                    "                    const handled = await this.handleApiRequest(req, res, query, match);",
+                    "                    if (handled) return true;",
+                    "                }"
+                  ],
+                  "context_line": "                await this.render(req, res, pathname, query, parsedUrl, true);",
+                  "post_context": [
+                    "                return true;",
+                    "            } catch (err) {",
+                    "                if (err instanceof _baseserver.NoFallbackError) {",
+                    "                    throw err;",
+                    "                }",
+                    "                try {",
+                    "                    if (this.renderOpts.dev) {"
+                  ],
+                  "in_app": false,
+                  "data": { "client_in_app": false }
+                },
+                {
+                  "function": "DevServer.pipeImpl",
+                  "module": "next.dist.server:base-server",
+                  "filename": "/Users/pedro/Desktop/social/node_modules/next/dist/server/base-server.js",
+                  "abs_path": "/Users/pedro/Desktop/social/node_modules/next/dist/server/base-server.js",
+                  "lineno": 1008,
+                  "colno": 25,
+                  "pre_context": [
+                    "            renderOpts: {",
+                    "                ...this.renderOpts,",
+                    "                supportsDynamicResponse: !isBotRequest,",
+                    "                botType: (0, _isbot.getBotType)(ua),",
+                    "                serveStreamingMetadata: (0, _streamingmetadata.shouldServeStreamingMetadata)(ua, this.nextConfig.htmlLimitedBots)",
+                    "            }",
+                    "        };"
+                  ],
+                  "context_line": "        const payload = await fn(ctx);",
+                  "post_context": [
+                    "        if (payload === null) {",
+                    "            return;",
+                    "        }",
+                    "        const { req, res } = ctx;",
+                    "        const originalStatus = res.statusCode;",
+                    "        const { body, type } = payload;",
+                    "        let { cacheControl } = payload;"
+                  ],
+                  "in_app": false,
+                  "data": { "client_in_app": false }
+                },
+                {
+                  "function": "DevServer.renderToResponseImpl",
+                  "module": "next.dist.server:base-server",
+                  "filename": "/Users/pedro/Desktop/social/node_modules/next/dist/server/base-server.js",
+                  "abs_path": "/Users/pedro/Desktop/social/node_modules/next/dist/server/base-server.js",
+                  "lineno": 2445,
+                  "colno": 32,
+                  "pre_context": [
+                    "            for await (const match of this.matchers.matchAll(pathname, options)){",
+                    "                // when a specific invoke-output is meant to be matched",
+                    "                // ensure a prior dynamic route/page doesn't take priority",
+                    "                const invokeOutput = (0, _requestmeta.getRequestMeta)(ctx.req, 'invokeOutput');",
+                    "                if (!this.minimalMode && typeof invokeOutput === 'string' && (0, _utils1.isDynamicRoute)(invokeOutput || '') && invokeOutput {snip}",
+                    "                    continue;",
+                    "                }"
+                  ],
+                  "context_line": "                const result = await this.renderPageComponent({",
+                  "post_context": [
+                    "                    ...ctx,",
+                    "                    pathname: match.definition.pathname,",
+                    "                    renderOpts: {",
+                    "                        ...ctx.renderOpts,",
+                    "                        params: match.params",
+                    "                    }",
+                    "                }, bubbleNoFallback);"
+                  ],
+                  "in_app": false,
+                  "data": { "client_in_app": false }
+                },
+                {
+                  "function": "DevServer.renderPageComponent",
+                  "module": "next.dist.server:base-server",
+                  "filename": "/Users/pedro/Desktop/social/node_modules/next/dist/server/base-server.js",
+                  "abs_path": "/Users/pedro/Desktop/social/node_modules/next/dist/server/base-server.js",
+                  "lineno": 2408,
+                  "colno": 24,
+                  "pre_context": [
+                    "            appPaths,",
+                    "            // Ensuring for loading page component routes is done via the matcher.",
+                    "            shouldEnsure: false",
+                    "        });",
+                    "        if (result) {",
+                    "            (0, _tracer.getTracer)().setRootSpanAttribute('next.route', pathname);",
+                    "            try {"
+                  ],
+                  "context_line": "                return await this.renderToResponseWithComponents(ctx, result);",
+                  "post_context": [
+                    "            } catch (err) {",
+                    "                const isNoFallbackError = err instanceof NoFallbackError;",
+                    "                if (!isNoFallbackError || isNoFallbackError && bubbleNoFallback) {",
+                    "                    throw err;",
+                    "                }",
+                    "            }",
+                    "        }"
+                  ],
+                  "in_app": false,
+                  "data": { "client_in_app": false }
+                },
+                {
+                  "function": "DevServer.renderToResponseWithComponentsImpl",
+                  "module": "next.dist.server:base-server",
+                  "filename": "/Users/pedro/Desktop/social/node_modules/next/dist/server/base-server.js",
+                  "abs_path": "/Users/pedro/Desktop/social/node_modules/next/dist/server/base-server.js",
+                  "lineno": 1920,
+                  "colno": 28,
+                  "pre_context": [
+                    "            // Perform the render.",
+                    "            return doRender({",
+                    "                postponed,",
+                    "                pagesFallback: undefined,",
+                    "                fallbackRouteParams",
+                    "            });",
+                    "        };"
+                  ],
+                  "context_line": "        const cacheEntry = await this.responseCache.get(ssgCacheKey, responseGenerator, {",
+                  "post_context": [
+                    "            routeKind: // If the route module is not defined, we can assume it's a page being",
+                    "            // rendered and thus check isAppPath.",
+                    "            (routeModule == null ? void 0 : routeModule.definition.kind) ?? (isAppPath ? _routekind.RouteKind.APP_PAGE : _routekind.RouteKind.PAGES),",
+                    "            incrementalCache,",
+                    "            isOnDemandRevalidate,",
+                    "            isPrefetch: req.headers.purpose === 'prefetch',",
+                    "            isRoutePPREnabled"
+                  ],
+                  "in_app": false,
+                  "data": { "client_in_app": false }
+                },
+                {
+                  "function": "doRender",
+                  "module": "next.dist.server:base-server",
+                  "filename": "/Users/pedro/Desktop/social/node_modules/next/dist/server/base-server.js",
+                  "abs_path": "/Users/pedro/Desktop/social/node_modules/next/dist/server/base-server.js",
+                  "lineno": 1518,
+                  "colno": 42,
+                  "pre_context": [
+                    "                        },",
+                    "                        sharedContext: {",
+                    "                            buildId: this.buildId",
+                    "                        }",
+                    "                    };",
+                    "                    try {",
+                    "                        const request = _nextrequest.NextRequestAdapter.fromNodeNextRequest(req, (0, _nextrequest.signalFromNodeResponse)(re {snip}"
+                  ],
+                  "context_line": "                        const response = await routeModule.handle(request, context);",
+                  "post_context": [
+                    "                        req.fetchMetrics = context.renderOpts.fetchMetrics;",
+                    "                        const cacheTags = context.renderOpts.collectedTags;",
+                    "                        // If the request is for a static response, we can cache it so long",
+                    "                        // as it's not edge.",
+                    "                        if (isSSG) {",
+                    "                            const blob = await response.blob();",
+                    "                            // Copy the headers from the response."
+                  ],
+                  "in_app": false,
+                  "data": { "client_in_app": false }
+                },
+                {
+                  "function": "async AppRouteRouteModule.handle",
+                  "module": "next.dist.compiled.next-server:app-route.runtime.dev",
+                  "filename": "next/dist/src/server/route-modules/app-route/module.ts",
+                  "abs_path": "next/dist/src/server/route-modules/app-route/module.ts",
+                  "lineno": 695,
+                  "colno": 31,
+                  "pre_context": [
+                    "     // support. We set this to `unknown` because the type is not known until",
+                    "     // runtime when we do a instanceof check below."
+                  ],
+                  "context_line": "     const response: unknown = await this.actionAsyncStorage.run(",
+                  "post_context": [
+                    "       actionStore,",
+                    "       () =>",
+                    "         this.workUnitAsyncStorage.run(requestStore, () =>"
+                  ],
+                  "in_app": false,
+                  "data": { "client_in_app": false }
+                },
+                {
+                  "function": "async AppRouteRouteModule.do",
+                  "module": "next.dist.compiled.next-server:app-route.runtime.dev",
+                  "filename": "next/dist/src/server/route-modules/app-route/module.ts",
+                  "abs_path": "next/dist/src/server/route-modules/app-route/module.ts",
+                  "lineno": 568,
+                  "colno": 15,
+                  "pre_context": ["         }", "       } else {"],
+                  "context_line": "         res = await workUnitAsyncStorage.run(",
+                  "post_context": [
+                    "           requestStore,",
+                    "           handler,",
+                    "           request,"
+                  ],
+                  "in_app": false,
+                  "data": { "client_in_app": false }
+                },
+                {
+                  "function": "async eval",
+                  "module": "@sentry.nextjs.build.cjs.common:wrapRouteHandlerWithSentry",
+                  "filename": "node_modules/@sentry/nextjs/build/cjs/common/wrapRouteHandlerWithSentry.js",
+                  "abs_path": "node_modules/@sentry/nextjs/build/cjs/common/wrapRouteHandlerWithSentry.js",
+                  "lineno": 59,
+                  "colno": 1,
+                  "pre_context": ["             }", ""],
+                  "context_line": "             const response = await core.handleCallbackErrors(",
+                  "post_context": [
+                    "               () => originalFunction.apply(thisArg, args),",
+                    "               error => {",
+                    "                 // Next.js throws errors when calling `redirect()`. We don't wanna report these."
+                  ],
+                  "in_app": false,
+                  "data": { "client_in_app": false }
+                },
+                {
+                  "function": "async eval",
+                  "module": "hono.dist:hono-base",
+                  "filename": "node_modules/hono/dist/hono-base.js",
+                  "abs_path": "node_modules/hono/dist/hono-base.js",
+                  "lineno": 201,
+                  "colno": 1,
+                  "pre_context": ["     return (async () => {", "       try {"],
+                  "context_line": "         const context = await composed(c);",
+                  "post_context": [
+                    "         if (!context.finalized) {",
+                    "           throw new Error(",
+                    "             \"Context is not finalized. Did you forget to return a Response object or `await next()`?\""
+                  ],
+                  "in_app": false,
+                  "data": { "client_in_app": false }
+                },
+                {
+                  "function": "async dispatch",
+                  "module": "hono.dist:compose",
+                  "filename": "node_modules/hono/dist/compose.js",
+                  "abs_path": "node_modules/hono/dist/compose.js",
+                  "lineno": 22,
+                  "colno": 1,
+                  "pre_context": ["       if (handler) {", "         try {"],
+                  "context_line": "           res = await handler(context, () => dispatch(i + 1));",
+                  "post_context": [
+                    "         } catch (err) {",
+                    "           if (err instanceof Error && onError) {",
+                    "             context.error = err;"
+                  ],
+                  "in_app": false,
+                  "data": { "client_in_app": false }
+                },
+                {
+                  "function": "process.processTicksAndRejections",
+                  "module": "task_queues",
+                  "filename": "node:internal/process/task_queues",
+                  "abs_path": "node:internal/process/task_queues",
+                  "lineno": 105,
+                  "colno": 5,
+                  "platform": "nodejs",
+                  "in_app": false,
+                  "data": { "client_in_app": false }
+                },
+                {
+                  "function": "eval",
+                  "module": "hono.dist.validator:validator",
+                  "filename": "node_modules/hono/dist/validator/validator.js",
+                  "abs_path": "node_modules/hono/dist/validator/validator.js",
+                  "lineno": 81,
+                  "colno": 1,
+                  "pre_context": [
+                    "     }",
+                    "     c.req.addValidatedData(target, res);"
+                  ],
+                  "context_line": "     await next();",
+                  "post_context": ["   };", " };", " export {"],
+                  "in_app": false,
+                  "data": { "client_in_app": false }
+                },
+                {
+                  "function": "eval",
+                  "module": "hono.dist:compose",
+                  "filename": "node_modules/hono/dist/compose.js",
+                  "abs_path": "node_modules/hono/dist/compose.js",
+                  "lineno": 22,
+                  "colno": 1,
+                  "pre_context": ["       if (handler) {", "         try {"],
+                  "context_line": "           res = await handler(context, () => dispatch(i + 1));",
+                  "post_context": [
+                    "         } catch (err) {",
+                    "           if (err instanceof Error && onError) {",
+                    "             context.error = err;"
+                  ],
+                  "in_app": false,
+                  "data": { "client_in_app": false }
+                },
+                {
+                  "function": "dispatch",
+                  "module": "hono.dist:compose",
+                  "filename": "node_modules/hono/dist/compose.js",
+                  "abs_path": "node_modules/hono/dist/compose.js",
+                  "lineno": 22,
+                  "colno": 1,
+                  "pre_context": ["       if (handler) {", "         try {"],
+                  "context_line": "           res = await handler(context, () => dispatch(i + 1));",
+                  "post_context": [
+                    "         } catch (err) {",
+                    "           if (err instanceof Error && onError) {",
+                    "             context.error = err;"
+                  ],
+                  "in_app": false,
+                  "data": { "client_in_app": false }
+                },
+                {
+                  "function": "eval",
+                  "module": "friends.router.ts",
+                  "filename": "src/server/modules/friends/friends.router.ts",
+                  "abs_path": "src/server/modules/friends/friends.router.ts",
+                  "lineno": 171,
+                  "colno": 13,
+                  "pre_context": [
+                    "     const body = ctx.req.valid(\"json\");",
+                    "     if (body.name?.toLowerCase().includes(\"crash\")) {"
+                  ],
+                  "context_line": "       throw new Error(\"Demo: CreateFriend crash\");",
+                  "post_context": [
+                    "     }",
+                    "     const friend = await prisma.friend.create({",
+                    "       data: {"
+                  ],
+                  "in_app": true,
+                  "data": { "client_in_app": true }
+                }
+              ]
+            },
+            "mechanism": { "type": "generic", "handled": true }
+          }
+        ]
+      },
+      "fingerprint": ["{{ default }}"],
+      "grouping_config": {
+        "enhancements": "KLUv_SAd6QAAkwORuGFsbC1wbGF0Zm9ybXM6MjAyMy0wMS0xMZA#KLUv_SAd6QAAkwORuGFsbC1wbGF0Zm9ybXM6MjAyMy0wMS0xMZA#KLUv_SAd6QAAkwORuGFsbC1wbGF0Zm9ybXM6MjAyMy0wMS0xMZA",
+        "id": "newstyle:2023-01-11"
+      },
+      "hashes": ["97214d5d32462b58d136a89def4659e1"],
+      "ingest_path": [
+        {
+          "version": "25.7.0",
+          "public_key": "XE7QiyuNlja9PZ7I9qJlwQotzecWrUIN91BAO7Q5R38"
+        }
+      ],
+      "key_id": "4728838",
+      "level": "error",
+      "location": "src/server/modules/friends/friends.router.ts",
+      "logger": "",
+      "metadata": {
+        "filename": "src/server/modules/friends/friends.router.ts",
+        "function": "eval",
+        "in_app_frame_mix": "mixed",
+        "type": "Error",
+        "value": "Demo: CreateFriend crash"
+      },
+      "modules": {
+        "@commitlint/cli": "^19.8.1",
+        "@commitlint/config-conventional": "^19.8.1",
+        "@eslint/eslintrc": "^3",
+        "@hono/zod-openapi": "^0.19.8",
+        "@hookform/resolvers": "^5.2.1",
+        "@prisma/client": "^6.10.1",
+        "@radix-ui/react-alert-dialog": "^1.1.15",
+        "@radix-ui/react-avatar": "^1.1.10",
+        "@radix-ui/react-dialog": "^1.1.14",
+        "@radix-ui/react-dropdown-menu": "^2.1.16",
+        "@radix-ui/react-label": "^2.1.7",
+        "@radix-ui/react-popover": "^1.1.14",
+        "@radix-ui/react-scroll-area": "^1.2.9",
+        "@radix-ui/react-separator": "^1.1.7",
+        "@radix-ui/react-slot": "^1.2.3",
+        "@radix-ui/react-tooltip": "^1.2.7",
+        "@scalar/hono-api-reference": "^0.9.6",
+        "@sentry/nextjs": "^10.5.0",
+        "@tailwindcss/postcss": "^4",
+        "@types/node": "^20",
+        "@types/react": "^19",
+        "@types/react-dom": "^19",
+        "better-auth": "^1.2.10",
+        "class-variance-authority": "^0.7.1",
+        "clsx": "^2.1.1",
+        "cmdk": "^1.1.1",
+        "eslint": "^9",
+        "eslint-config-next": "15.3.4",
+        "hono": "^4.8.2",
+        "husky": "^9.1.7",
+        "lint-staged": "^16.1.2",
+        "lucide-react": "^0.522.0",
+        "next": "15.3.4",
+        "next-themes": "^0.4.6",
+        "prettier": "^3.6.1",
+        "prettier-plugin-tailwindcss": "^0.6.13",
+        "prisma": "^6.10.1",
+        "react": "^19.0.0",
+        "react-dom": "^19.0.0",
+        "react-hook-form": "^7.62.0",
+        "react-phone-number-input": "^3.4.12",
+        "sonner": "^2.0.7",
+        "tailwind-merge": "^3.3.1",
+        "tailwindcss": "^4",
+        "tw-animate-css": "^1.3.4",
+        "typescript": "^5",
+        "zod": "^3.25.76"
+      },
+      "nodestore_insert": 1755618189.766284,
+      "received": 1755618185.448707,
+      "request": {
+        "url": "http://localhost:3000/api/friends",
+        "method": "POST",
+        "cookies": [
+          [
+            "__next_hmr_refresh_hash__",
+            "20b16e14061dbdcf8e6f53ed14003d9c713f519692af619e"
+          ],
+          [
+            "ph_phc_SBLpZVAB6jmHOct9CABq3PF0Yn5FU3G2FgT4xUr2XrT_posthog",
+            "{\"distinct_id\":\"01986c61-84db-7c11-9671-df4e5ec2bcb0\",\"$sesid\":[1755618172965,\"0198c2e2-e1e5-7cd3-aea9-289d3767e012\",1755616305637],\"$initial_person_info\":{\"r\":\"$direct\",\"u\":\"http://localhost:4111/agents/weatherAgent/chat/68ff4d87-06d9-4800-9914-860277c62542\"}}"
+          ],
+          ["sidebar_state", "false"]
+        ],
+        "headers": [
+          ["Accept", "*/*"],
+          ["Accept-Encoding", "gzip, deflate, br, zstd"],
+          ["Accept-Language", "en-US,en;q=0.9"],
+          [
+            "Baggage",
+            "sentry-environment=development,sentry-release=b8dce913b03c455a816f0335feffc60274ebd2b5,sentry-public_key=e3cdcf0b9e3ee6ac3065797b9d88ffa7,sentry-trace_id=f90c926c150c54126649671484ffc7ef,sentry-org_id=[Filtered],sentry-transaction=GET%20%2F,sentry-sampled=true,sentry-sample_rand=0.[Filtered],sentry-sample_rate=1"
+          ],
+          ["Connection", "keep-alive"],
+          ["Content-Length", "81"],
+          ["Content-Type", "application/json"],
+          ["Host", "localhost:3000"],
+          ["Origin", "http://localhost:3000"],
+          ["Referer", "http://localhost:3000/"],
+          [
+            "Sec-Ch-Ua",
+            "\"Not;A=Brand\";v=\"99\", \"Google Chrome\";v=\"139\", \"Chromium\";v=\"139\""
+          ],
+          ["Sec-Ch-Ua-Mobile", "?0"],
+          ["Sec-Ch-Ua-Platform", "\"macOS\""],
+          ["Sec-Fetch-Dest", "empty"],
+          ["Sec-Fetch-Mode", "cors"],
+          ["Sec-Fetch-Site", "same-origin"],
+          [
+            "Sentry-Trace",
+            "f90c926c150c54126649671484ffc7ef-83db1c3a0b032b09-1"
+          ],
+          [
+            "User-Agent",
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+          ]
+        ],
+        "inferred_content_type": "application/json"
+      },
+      "sdk": {
+        "name": "sentry.javascript.nextjs",
+        "version": "10.5.0",
+        "integrations": [
+          "InboundFilters",
+          "FunctionToString",
+          "LinkedErrors",
+          "RequestData",
+          "NodeSystemError",
+          "Console",
+          "OnUncaughtException",
+          "OnUnhandledRejection",
+          "ContextLines",
+          "LocalVariablesAsync",
+          "Context",
+          "ChildProcess",
+          "ProcessSession",
+          "Modules",
+          "NodeFetch",
+          "Express",
+          "Fastify",
+          "Graphql",
+          "Mongo",
+          "Mongoose",
+          "Mysql",
+          "Mysql2",
+          "Redis",
+          "Postgres",
+          "Prisma",
+          "Hapi",
+          "Koa",
+          "Connect",
+          "Tedious",
+          "GenericPool",
+          "Kafka",
+          "Amqplib",
+          "LruMemoizer",
+          "VercelAI",
+          "OpenAI",
+          "PostgresJs",
+          "Firebase",
+          "Http",
+          "DistDirRewriteFrames"
+        ],
+        "packages": [
+          { "name": "npm:@sentry/nextjs", "version": "10.5.0" },
+          { "name": "npm:@sentry/node", "version": "10.5.0" }
+        ]
+      },
+      "timestamp": 1755618185.011,
+      "title": "Error: Demo: CreateFriend crash",
+      "transaction": "POST /api/[[...route]]",
+      "type": "error",
+      "user": {
+        "geo": {
+          "country_code": "US",
+          "city": "Petaluma",
+          "subdivision": "California",
+          "region": "United States"
+        }
+      },
+      "version": "7",
+      "url": "https://sentry.io/api/0/projects/pedro-stanzani/javascript-nextjs/events/3f5c1540dbaf41f6aa0db0c2cd9e7613/",
+      "web_url": "https://sentry.io/organizations/pedro-stanzani/issues/6818814471/events/3f5c1540dbaf41f6aa0db0c2cd9e7613/",
+      "issue_url": "https://sentry.io/api/0/organizations/pedro-stanzani/issues/6818814471/",
+      "issue_id": "6818814471"
+    }
+  },
+  "actor": { "type": "application", "id": "sentry", "name": "Sentry" }
+}
