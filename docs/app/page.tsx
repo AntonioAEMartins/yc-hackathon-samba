@@ -193,13 +193,19 @@ export default function SambaLandingPage() {
                 <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
             </Link>
-            <Button
-              variant="outline"
-              size="lg"
-              className="border-deep-teal text-deep-teal hover:bg-deep-teal hover:text-white transition-colors bg-transparent"
+            <Link
+              href="https://x.com/pedrostanzani/status/1955430452828983338"
+              target="_blank"
+              rel="noopener noreferrer"
             >
-              Watch Demo
-            </Button>
+              <Button
+                variant="outline"
+                size="lg"
+                className="border-deep-teal text-deep-teal hover:bg-deep-teal hover:text-white transition-colors bg-transparent"
+              >
+                Watch Demo
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
@@ -552,13 +558,19 @@ export default function SambaLandingPage() {
                 <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
             </Link>
-            <Button
-              variant="outline"
-              size="lg"
-              className="border-white text-white hover:bg-white hover:text-deep-teal transition-colors bg-transparent"
+            <Link
+              href="https://x.com/pedrostanzani/status/1955430452828983338"
+              target="_blank"
+              rel="noopener noreferrer"
             >
-              Watch Demo
-            </Button>
+              <Button
+                variant="outline"
+                size="lg"
+                className="border-white text-white hover:bg-white hover:text-deep-teal transition-colors bg-transparent"
+              >
+                Watch Demo
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
